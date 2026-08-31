@@ -1,37 +1,102 @@
-﻿# Dependencies
+﻿# ============================================
+# Dependencies
+# ============================================
 node_modules/
 .pnpm-store/
 
+# ============================================
 # Build outputs
+# ============================================
 dist/
+dist-ssr/
 build/
 .next/
 out/
 
-# Environment variables
+# ============================================
+# Environment variables (SENSITIVE - never commit)
+# ============================================
 .env
 .env.local
 .env.*.local
 .env.development
 .env.production
+.env.staging
+.env.test
 
+# ============================================
+# Uploaded files / user content
+# ============================================
+apps/api/uploads/
+
+# ============================================
+# AI / Editor tool config (private)
+# ============================================
+.kombai/
+.claude/
+.windsurf/
+.agents/
+.qodo/
+.cursor/
+.gemini/
+
+# ============================================
 # Logs
+# ============================================
+logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
+# ============================================
 # OS files
+# ============================================
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Editor
+# ============================================
+# Editor files
+# ============================================
 .vscode/
+!.vscode/extensions.json
 .idea/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
+# ============================================
 # Cache
+# ============================================
 .cache/
 .turbo/
 .eslintcache
+.parcel-cache/
 
+# ============================================
 # Test coverage
+# ============================================
 coverage/
+
+# ============================================
+# Prisma
+# ============================================
+.prisma/
+
+# ============================================
+# Docker
+# ============================================
+docker-compose.override.yml
+
+# ============================================
+# Misc
+# ============================================
+skills-lock.json
+*.local
