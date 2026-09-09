@@ -3,7 +3,7 @@ services:
     name: tasksync-api
     runtime: node
     plan: free
-    region: oregon
+    region: ohio
     rootDir: apps/api
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
     startCommand: pnpm exec prisma migrate deploy && pnpm run start
