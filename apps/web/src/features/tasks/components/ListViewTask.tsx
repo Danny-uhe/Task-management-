@@ -52,14 +52,12 @@ export default function ListViewTask({ task, selected, onClick }: Props) {
         {/* Footer row */}
         <div className='mt-3 flex items-center gap-4'>
           {/* Assignee */}
-          {task.assignee && (
+          {task.assignedTo && (
             <div className='flex items-center gap-1.5'>
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ${task.assigneeColor ?? 'bg-blue-500'}`}
-              >
-                {task.assignee.slice(0, 2).toUpperCase()}
+              <div className='flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white'>
+                {task.assignedTo.name.slice(0, 2).toUpperCase()}
               </div>
-              <span className='text-xs text-slate-500'>{task.assignee}</span>
+              <span className='text-xs text-slate-500'>{task.assignedTo.name}</span>
             </div>
           )}
 

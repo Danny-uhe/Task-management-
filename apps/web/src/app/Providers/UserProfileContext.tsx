@@ -58,8 +58,8 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   const [role,      setRoleState]    = useState(() => ls(LS_ROLE_KEY,   'Product Designer'));
   const [avatarUrl, setAvatarState]  = useState(() => ls(LS_AVATAR_KEY, DEFAULT_AVATAR));
   const [points,    setPointsState]  = useState(() => lsNum(LS_POINTS_KEY, 2840));
-  const [streak,    setStreakState]   = useState(() => lsNum(LS_STREAK_KEY, 12));
-  const [rank,      setRankState]    = useState(() => lsNum(LS_RANK_KEY, 1));
+  const [streak]   = useState(() => lsNum(LS_STREAK_KEY, 12));
+  const [rank]     = useState(() => lsNum(LS_RANK_KEY, 1));
   const [lastEarned, setLastEarned]  = useState<{ amount: number; reason: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);

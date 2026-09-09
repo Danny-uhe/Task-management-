@@ -1,4 +1,4 @@
-import LeaderboardRow from "./LeaderBoardRow";
+import LeaderboardRow from "./LeaderboardRow";
 
 export default function LeaderboardTable() {
 

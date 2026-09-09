@@ -198,7 +198,7 @@ export default function TasksPage() {
         {view === 'board' && (
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             {/* Board-level empty state when search has no matches */}
-            {search && todo.length === 0 && progress.length === 0 && review.length === 0 && completed.length === 0 ? (
+            {search && todo.length === 0 && inProgress.length === 0 && inReview.length === 0 && done.length === 0 ? (
               <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 py-20 text-slate-400'>
                 <p className='font-semibold text-slate-600'>No tasks match "{search}"</p>
                 <p className='mt-1 text-sm'>Try a different keyword or</p>

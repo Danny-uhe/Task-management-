@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Send, Mail, User, Trash2, Clock, CheckCircle2, RefreshCw } from 'lucide-react';
+import { X, Send, Mail, User, Trash2, Clock, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { membersService, type Invitation } from '../services/members.service';
 

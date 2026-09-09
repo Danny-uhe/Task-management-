@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, ClipboardList, Trophy, Activity, Archive, Settings, LogOut, CircleHelp, Users, Building2 } from 'lucide-react';
+import { X, LayoutDashboard, ClipboardList, Trophy, Activity, Archive, Settings, LogOut, CircleHelp, Users, Building2 } from 'lucide-react';
 
 import type { AppLayoutProps } from './AppLayout.types';
 import AppHeader  from './AppHeader';

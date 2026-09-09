@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, ChevronDown, CalendarDays, Upload, Trash2, FileText, ImageIcon, File } from 'lucide-react';
+import { X, CalendarDays, Upload, Trash2, FileText, ImageIcon, File } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTaskContext } from '@/app/Providers/TaskContext';
-import { useAuthStore }   from '@/store/authStore';
 import { projectService, type ApiProject } from '@/services/project.service';
 import type { TaskStatus, TaskPriority } from '../types/types';
 
@@ -46,8 +45,6 @@ function fmt(bytes: number) {
 
 export default function AddTaskModal() {
   const { addTaskOpen, closeAddTask, addTask } = useTaskContext();
-  const currentUser = useAuthStore((s) => s.user);
-  const isAdmin     = currentUser?.systemRole === 'admin';
 
   /* Form state */
   const [title,       setTitle]       = useState('');

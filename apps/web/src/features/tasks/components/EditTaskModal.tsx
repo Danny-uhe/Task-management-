@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Task, TaskStatus, TaskPriority } from '../types/types';
 import { useTaskContext } from '@/app/Providers/TaskContext';

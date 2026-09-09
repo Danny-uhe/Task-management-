@@ -43,7 +43,7 @@ export default function TaskDetailsDrawer({ open, task, onClose }: Props) {
 
             <div className='flex items-center gap-3'>
               <User size={18} />
-              <span>{task.assignee}</span>
+              <span>{task.assignedTo?.name ?? 'Unassigned'}</span>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Camera, Globe, Users, ClipboardList, TrendingUp, Edit3, Check, Copy } from 'lucide-react';
+import { Camera, Globe, Users, ClipboardList, TrendingUp, Edit3, Check, Copy } from 'lucide-react';
 import AppLayout from '@/layout/AppLayout';
 
 const INDUSTRIES = ['Technology', 'Design', 'Finance', 'Healthcare', 'Education', 'Marketing', 'Other'];

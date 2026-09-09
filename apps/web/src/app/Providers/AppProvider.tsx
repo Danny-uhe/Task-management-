@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import QueryProvider from './QueryProvider';
 import ToastProvider from './ToastProvider';
 import { UserProfileProvider } from './UserProfileContext';

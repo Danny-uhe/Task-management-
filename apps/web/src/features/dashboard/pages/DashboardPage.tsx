@@ -18,7 +18,7 @@ const INITIAL: DashTask[] = [
 ];
 
 export default function DashboardPage() {
-  const { openAddTask, tasks, updateTask } = useTaskContext();
+  const { openAddTask, tasks } = useTaskContext();
 
   const [dashTasks, setDashTasks] = useState<DashTask[]>(INITIAL);
   const [viewTask,  setViewTask]  = useState<Task | null>(null);
@@ -132,10 +132,6 @@ export default function DashboardPage() {
         open={editTask !== null}
         task={editTask}
         onClose={() => setEditTask(null)}
-        onSave={(updated) => {
-          updateTask(updated);
-          setEditTask(null);
-        }}
       />
     </AppLayout>
   );

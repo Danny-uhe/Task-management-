@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 
 import { Button, Input, PasswordInput } from '@/shared/components/ui';
 import { loginSchema, type LoginFormData } from '../schemas/login.schema';
-import FooterLink    from '../components/FooterLink';
 import RememberMe    from '../components/RemenberMe';
 
 import { authService } from '../services/auth.services';
@@ -73,7 +72,7 @@ export default function LoginForm() {
 
       <div className='mt-4 flex items-center justify-between'>
         <RememberMe
-          checked={watch('remember')}
+          checked={watch('remember') ?? false}
           onChange={() => setValue('remember', !watch('remember'))}
         />
 

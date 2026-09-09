@@ -78,13 +78,11 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
               Assignee
             </p>
             <div className='flex items-center gap-2'>
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ${task.assigneeColor ?? 'bg-blue-500'}`}
-              >
-                {(task.assignee ?? 'RI').slice(0, 2).toUpperCase()}
+              <div className='flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white'>
+                {(task.assignedTo?.name ?? 'RI').slice(0, 2).toUpperCase()}
               </div>
               <span className='text-sm font-medium text-slate-700'>
-                {task.assignee ?? 'Rowland'}
+                {task.assignedTo?.name ?? 'Rowland'}
               </span>
             </div>
           </div>
