@@ -10,6 +10,7 @@ import { env } from "./env.js";
 export const redisConnection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null, // required by BullMQ
   enableReadyCheck:     false, // required by BullMQ
+  family: 4, // force IPv4 — some hosts (e.g. Render) reset IPv6 connections to Upstash
   retryStrategy(times: number) {
     // Exponential backoff: 50ms, 100ms, 200ms … capped at 2s
     const delay = Math.min(50 * 2 ** times, 2000);
