@@ -1,27 +1,25 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown, CalendarDays, Upload, Trash2, FileText, ImageIcon, File } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useTaskContext } from '@/app/Providers/TaskContext';
-import { useNotifications } from '@/app/Providers/NotificationContext';
-import type { Task } from '../types/types';
+import { useAuthStore }   from '@/store/authStore';
+import { projectService, type ApiProject } from '@/services/project.service';
+import type { TaskStatus, TaskPriority } from '../types/types';
 
-/* ── helpers ── */
-const priorities: { value: Task['priority']; color: string; dot: string }[] = [
-  { value: 'High',   color: 'border-blue-500 bg-blue-50',   dot: 'bg-red-500'    },
-  { value: 'Medium', color: 'border-blue-500 bg-blue-50',   dot: 'bg-orange-400' },
-  { value: 'Low',    color: 'border-slate-200 bg-white',    dot: 'bg-slate-400'  },
+/* ── helpers ─────────────────────────────────────────────────────────────── */
+
+const priorities: { value: TaskPriority; label: string; dot: string }[] = [
+  { value: 'high',   label: 'High',   dot: 'bg-red-500'    },
+  { value: 'medium', label: 'Medium', dot: 'bg-orange-400' },
+  { value: 'low',    label: 'Low',    dot: 'bg-slate-400'  },
 ];
 
-const statuses: { value: Task['status']; label: string }[] = [
-  { value: 'todo',      label: 'To do'       },
-  { value: 'progress',  label: 'In progress' },
-  { value: 'review',    label: 'In review'   },
-  { value: 'completed', label: 'Done'        },
+const statuses: { value: TaskStatus; label: string }[] = [
+  { value: 'todo',        label: 'To Do'       },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'in_review',   label: 'In Review'   },
+  { value: 'done',        label: 'Done'        },
 ];
-
-const filterFromStatus = (s: Task['status']): Task['filter'] => {
-  if (s === 'completed') return 'Completed';
-  return 'Today';
-};
 
 type AttachedFile = { name: string; size: string; type: 'pdf' | 'image' | 'file' };
 
@@ -44,77 +42,79 @@ function fmt(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/* ── ASSIGNEE DROPDOWN ── */
-const ASSIGNEES = [
-  { initials: 'RI', name: 'Rowland I.', color: 'bg-blue-500'    },
-  { initials: 'SM', name: 'Sarah M.',   color: 'bg-purple-500'  },
-  { initials: 'DT', name: 'Dev Team',   color: 'bg-emerald-500' },
-];
+/* ── Component ───────────────────────────────────────────────────────────── */
 
 export default function AddTaskModal() {
   const { addTaskOpen, closeAddTask, addTask } = useTaskContext();
-  const { addNotification } = useNotifications();
+  const currentUser = useAuthStore((s) => s.user);
+  const isAdmin     = currentUser?.systemRole === 'admin';
 
+  /* Form state */
   const [title,       setTitle]       = useState('');
   const [description, setDescription] = useState('');
-  const [priority,    setPriority]    = useState<Task['priority']>('Medium');
-  const [status,      setStatus]      = useState<Task['status']>('todo');
+  const [priority,    setPriority]    = useState<TaskPriority>('medium');
+  const [status,      setStatus]      = useState<TaskStatus>('todo');
   const [dueDate,     setDueDate]     = useState('');
-  const [assigneeIdx, setAssigneeIdx] = useState(0);
-  const [showAssignee, setShowAssignee] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [dragging,    setDragging]    = useState(false);
+  const [saving,      setSaving]      = useState(false);
+
+  /* Projects */
+  const [projects,    setProjects]    = useState<ApiProject[]>([]);
+  const [projectId,   setProjectId]   = useState('');
 
   const fileRef = useRef<HTMLInputElement>(null);
 
+  /* Load projects when modal opens */
+  useEffect(() => {
+    if (!addTaskOpen) return;
+    projectService.getProjects().then((res) => {
+      setProjects(res.data.projects);
+      if (res.data.projects.length > 0) setProjectId(res.data.projects[0].id);
+    }).catch(() => toast.error('Could not load projects'));
+  }, [addTaskOpen]);
+
   if (!addTaskOpen) return null;
 
-  /* ── file handling ── */
+  /* File handling */
   const addFiles = (files: FileList | null) => {
     if (!files) return;
-    const next: AttachedFile[] = Array.from(files).map((f) => ({
-      name: f.name,
-      size: fmt(f.size),
-      type: guessType(f.name),
-    }));
-    setAttachments((prev) => [...prev, ...next]);
+    setAttachments((prev) => [
+      ...prev,
+      ...Array.from(files).map((f) => ({
+        name: f.name, size: fmt(f.size), type: guessType(f.name),
+      })),
+    ]);
   };
 
-  const handleCreate = () => {
-    if (!title.trim()) return;
-    const assignee = ASSIGNEES[assigneeIdx];
-    addTask({
-      title,
-      description,
-      priority,
-      status,
-      filter: filterFromStatus(status),
-      dueDate: dueDate || 'Today',
-      assignee: assignee.name,
-      assigneeColor: assignee.color,
-      progress: 0,
-      comments: 0,
-      actionItems: [],
-      attachments,
-    });
-    /* Fire notification if assigning to someone else */
-    if (assigneeIdx !== 0) {
-      addNotification({
-        type: 'assignment',
-        title: 'Task Assigned',
-        message: `You assigned "${title}" to ${assignee.name}`,
-        avatarColor: assignee.color,
-        avatarInitials: assignee.initials,
+  const handleCreate = async () => {
+    if (!title.trim() || !projectId) return;
+    setSaving(true);
+    try {
+      await addTask(projectId, {
+        title:       title.trim(),
+        description: description.trim() || undefined,
+        priority,
+        status,
+        dueDate:     dueDate || undefined,
+        points:      0,
       });
+      toast.success('Task created');
+      reset();
+      closeAddTask();
+    } catch (err: unknown) {
+      toast.error(
+        (err as { response?: { data?: { message?: string } } })
+          ?.response?.data?.message ?? 'Failed to create task'
+      );
+    } finally {
+      setSaving(false);
     }
-    reset();
-    closeAddTask();
   };
 
   const reset = () => {
-    setTitle(''); setDescription(''); setPriority('Medium');
-    setStatus('todo'); setDueDate(''); setAssigneeIdx(0);
-    setAttachments([]); setDragging(false);
+    setTitle(''); setDescription(''); setPriority('medium');
+    setStatus('todo'); setDueDate(''); setAttachments([]); setDragging(false);
   };
 
   const handleClose = () => { reset(); closeAddTask(); };
@@ -125,18 +125,36 @@ export default function AddTaskModal() {
     <div className='fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4'>
       <div className='flex w-full max-w-md flex-col rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl'>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
-          <h2 className='text-lg font-bold text-slate-900'>Add task</h2>
+          <h2 className='text-lg font-bold text-slate-900'>Add Task</h2>
           <button onClick={handleClose} className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'>
             <X size={18} />
           </button>
         </div>
 
-        {/* ── Scrollable body ── */}
+        {/* Scrollable body */}
         <div className='max-h-[75vh] space-y-5 overflow-y-auto px-6 py-5'>
 
-          {/* Task title */}
+          {/* Project selector */}
+          <div>
+            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Project</label>
+            {projects.length === 0 ? (
+              <p className='text-sm text-slate-400'>No projects found. Ask an admin to create one.</p>
+            ) : (
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className={inp}
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Title */}
           <div>
             <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Task title</label>
             <input
@@ -160,57 +178,17 @@ export default function AddTaskModal() {
             />
           </div>
 
-          {/* Assignee + Due date */}
-          <div className='grid grid-cols-2 gap-4'>
-            {/* Assignee */}
-            <div>
-              <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Assignee</label>
-              <div className='relative'>
-                <button
-                  type='button'
-                  onClick={() => setShowAssignee(!showAssignee)}
-                  className={`${inp} flex items-center justify-between gap-2 text-left`}
-                >
-                  <div className='flex items-center gap-2'>
-                    <span className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${ASSIGNEES[assigneeIdx].color}`}>
-                      {ASSIGNEES[assigneeIdx].initials}
-                    </span>
-                    <span className='text-slate-700'>{ASSIGNEES[assigneeIdx].name.split(' ')[0]}</span>
-                  </div>
-                  <ChevronDown size={14} className='text-slate-400' />
-                </button>
-
-                {showAssignee && (
-                  <div className='absolute left-0 top-full z-10 mt-1 w-full rounded-xl border border-slate-100 bg-white py-1 shadow-lg'>
-                    {ASSIGNEES.map((a, i) => (
-                      <button
-                        key={a.name}
-                        onClick={() => { setAssigneeIdx(i); setShowAssignee(false); }}
-                        className='flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50'
-                      >
-                        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ${a.color}`}>
-                          {a.initials}
-                        </span>
-                        {a.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Due date */}
-            <div>
-              <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Due date</label>
-              <div className='relative'>
-                <CalendarDays size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
-                <input
-                  type='date'
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className={`${inp} pl-9`}
-                />
-              </div>
+          {/* Due date */}
+          <div>
+            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Due date</label>
+            <div className='relative'>
+              <CalendarDays size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
+              <input
+                type='date'
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className={`${inp} pl-9`}
+              />
             </div>
           </div>
 
@@ -231,7 +209,7 @@ export default function AddTaskModal() {
                 >
                   <span className={`h-3 w-3 rounded-full ${p.dot}`} />
                   <span className={`text-sm font-semibold ${priority === p.value ? 'text-slate-900' : 'text-slate-500'}`}>
-                    {p.value}
+                    {p.label}
                   </span>
                 </button>
               ))}
@@ -262,8 +240,6 @@ export default function AddTaskModal() {
           {/* Attachments */}
           <div>
             <label className='mb-2 block text-sm font-semibold text-slate-700'>Attachments</label>
-
-            {/* Drop zone */}
             <button
               type='button'
               onClick={() => fileRef.current?.click()}
@@ -279,11 +255,10 @@ export default function AddTaskModal() {
                 <span className='font-semibold text-blue-500'>Click to upload</span>
                 <span className='text-slate-400'> or drag and drop</span>
               </p>
-              <p className='text-xs text-slate-400'>PDF, PNG, JPG, or DOCX — up to 10MB each</p>
+              <p className='text-xs text-slate-400'>PDF, PNG, JPG — up to 10 MB each</p>
             </button>
             <input ref={fileRef} type='file' multiple className='hidden' onChange={(e) => addFiles(e.target.files)} />
 
-            {/* File list */}
             {attachments.length > 0 && (
               <div className='mt-2 space-y-2'>
                 {attachments.map((f, i) => (
@@ -308,7 +283,7 @@ export default function AddTaskModal() {
           </div>
         </div>
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         <div className='flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4'>
           <button
             onClick={handleClose}
@@ -318,10 +293,10 @@ export default function AddTaskModal() {
           </button>
           <button
             onClick={handleCreate}
-            disabled={!title.trim()}
+            disabled={!title.trim() || !projectId || saving}
             className='rounded-xl bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40'
           >
-            Create Task
+            {saving ? 'Creating…' : 'Create Task'}
           </button>
         </div>
       </div>

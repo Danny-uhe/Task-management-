@@ -3,27 +3,41 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, LayoutDashboard, ClipboardList, Trophy, Activity, Archive, Settings, LogOut, CircleHelp, Users, Building2 } from 'lucide-react';
 
 import type { AppLayoutProps } from './AppLayout.types';
-import AppHeader from './AppHeader';
+import AppHeader  from './AppHeader';
 import AddTaskModal from '@/features/tasks/components/AddTaskModal';
-import PointsToast from '@/features/shared/PointsToast';
+import PointsToast  from '@/features/shared/PointsToast';
+import { useAuthStore } from '@/store/authStore';
+import { authService }  from '@/features/auth/services/auth.services';
 
-const navItems = [
-  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard'    },
-  { to: '/tasks',        icon: ClipboardList,   label: 'All Tasks'    },
-  { to: '/members',      icon: Users,           label: 'Members'      },
-  { to: '/leaderboard',  icon: Trophy,          label: 'Leaderboard'  },
-  { to: '/activity',     icon: Activity,        label: 'Activity'     },
-  { to: '/organisation', icon: Building2,       label: 'Organisation' },
-  { to: '/archived',     icon: Archive,         label: 'Archived'     },
+const allNavItems = [
+  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',    adminOnly: false },
+  { to: '/tasks',        icon: ClipboardList,   label: 'All Tasks',    adminOnly: false },
+  { to: '/members',      icon: Users,           label: 'Members',      adminOnly: false },
+  { to: '/leaderboard',  icon: Trophy,          label: 'Leaderboard',  adminOnly: false },
+  { to: '/activity',     icon: Activity,        label: 'Activity',     adminOnly: false },
+  { to: '/organisation', icon: Building2,       label: 'Organisation', adminOnly: true  },
+  { to: '/archived',     icon: Archive,         label: 'Archived',     adminOnly: false },
 ];
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const { user, refreshToken, clearAuth } = useAuthStore();
+  const isAdmin   = user?.systemRole === 'admin';
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+  // Only show nav items the current user is allowed to see
+  const navItems  = allNavItems.filter((item) => !item.adminOnly || isAdmin);
+
+  const handleLogout = async () => {
+    try {
+      if (refreshToken) await authService.logout(refreshToken);
+    } catch {
+      // If API fails, still clear locally
+    } finally {
+      clearAuth();
+      navigate('/login');
+    }
   };
+
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${

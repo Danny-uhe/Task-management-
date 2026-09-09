@@ -4,16 +4,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 
 import { Button, Input, PasswordInput } from '@/shared/components/ui';
-
 import { loginSchema, type LoginFormData } from '../schemas/login.schema';
+import FooterLink    from '../components/FooterLink';
+import RememberMe    from '../components/RemenberMe';
 
-import GoogleButton from '../components/GoogleButton/GoogleButton';
-import AuthDivider from '../components/AuthDivider';
-import FooterLink from '../components/FooterLink';
-import RememberMe from '../components/RemenberMe';
+import { authService } from '../services/auth.services';
+import { useAuthStore } from '@/store/authStore';
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const setAuth  = useAuthStore((s) => s.setAuth);
 
   const {
     register,
@@ -23,19 +23,28 @@ export default function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      remember: false,
-    },
+    defaultValues: { remember: false },
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log(data);
+    try {
+      const res = await authService.login({
+        email:    data.email,
+        password: data.password,
+      });
 
-    toast.success('Welcome back!');
+      const { user, accessToken, refreshToken } = res.data;
 
-    setTimeout(() => {
+      setAuth(user, accessToken, refreshToken);
+
+      toast.success(`Welcome back, ${user.name}!`);
       navigate('/dashboard');
-    }, 1000);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })
+          ?.response?.data?.message ?? 'Invalid email or password';
+      toast.error(message);
+    }
   };
 
   return (
@@ -46,11 +55,7 @@ export default function LoginForm() {
         Log in to your TaskSync workspace
       </p>
 
-      <GoogleButton />
-
-      <AuthDivider text='OR LOG IN WITH EMAIL' />
-
-      <div className='space-y-4'>
+      <div className='mt-6 space-y-4'>
         <Input
           label='Email'
           placeholder='you@company.com'
@@ -80,14 +85,6 @@ export default function LoginForm() {
       <Button type='submit' className='mt-6 w-full' loading={isSubmitting}>
         Log In
       </Button>
-
-      <div className='mt-8'>
-        <FooterLink
-          text="Don't have an account?"
-          action='Sign up free'
-          href='/register'
-        />
-      </div>
     </form>
   );
 }

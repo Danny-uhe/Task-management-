@@ -1,16 +1,30 @@
 import { useState } from 'react';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { authService } from '@/features/auth/services/auth.services';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  const [email,       setEmail]       = useState('');
+  const [sent,        setSent]        = useState(false);
+  const [isLoading,   setIsLoading]   = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setSent(true);
+
+    setIsLoading(true);
+    try {
+      await authService.forgotPassword({ email: email.trim() });
+      setSent(true);
+    } catch {
+      // Always show success — don't reveal if email exists
+      setSent(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <div className='flex min-h-screen'>
@@ -80,9 +94,10 @@ export default function ForgotPasswordPage() {
 
                 <button
                   type='submit'
-                  className='h-11 w-full rounded-xl bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-700'
+                  disabled={isLoading}
+                  className='h-11 w-full rounded-xl bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60'
                 >
-                  Send Reset Link
+                  {isLoading ? 'Sending…' : 'Send Reset Link'}
                 </button>
               </form>
             </>

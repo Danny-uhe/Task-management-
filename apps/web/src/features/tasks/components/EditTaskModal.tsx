@@ -1,57 +1,89 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import type { Task } from '../types/types';
+import { X, ChevronDown } from 'lucide-react';
+import toast from 'react-hot-toast';
+import type { Task, TaskStatus, TaskPriority } from '../types/types';
+import { useTaskContext } from '@/app/Providers/TaskContext';
 
 type Props = {
-  open: boolean;
-  task: Task | null;
+  open:    boolean;
+  task:    Task | null;
   onClose: () => void;
-  onSave: (updated: Task) => void;
 };
 
-const priorities = ['Low', 'Medium', 'High'] as const;
+const priorities: { value: TaskPriority; label: string; dot: string }[] = [
+  { value: 'high',   label: 'High',   dot: 'bg-red-500'    },
+  { value: 'medium', label: 'Medium', dot: 'bg-orange-400' },
+  { value: 'low',    label: 'Low',    dot: 'bg-slate-400'  },
+];
 
-export default function EditTaskModal({ open, task, onClose, onSave }: Props) {
-  const [title, setTitle] = useState('');
+const statuses: { value: TaskStatus; label: string }[] = [
+  { value: 'todo',        label: 'To Do'       },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'in_review',   label: 'In Review'   },
+  { value: 'done',        label: 'Done'        },
+];
+
+const inputClass =
+  'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+const labelClass =
+  'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400';
+
+export default function EditTaskModal({ open, task, onClose }: Props) {
+  const { updateTask } = useTaskContext();
+
+  const [title,       setTitle]       = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
-  const [dueDate, setDueDate] = useState('');
-  const [assignee, setAssignee] = useState('');
+  const [priority,    setPriority]    = useState<TaskPriority>('medium');
+  const [status,      setStatus]      = useState<TaskStatus>('todo');
+  const [dueDate,     setDueDate]     = useState('');
+  const [saving,      setSaving]      = useState(false);
 
   /* Pre-fill when task changes */
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description ?? '');
-      setPriority(task.priority ?? 'Medium');
-      setDueDate(task.dueDate ?? '');
-      setAssignee(task.assignee ?? '');
+      setPriority(task.priority ?? 'medium');
+      setStatus(task.status  ?? 'todo');
+      // dueDate from API is ISO string — extract date part for the input
+      setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : '');
     }
   }, [task]);
 
   if (!open || !task) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) return;
-    onSave({ ...task, title, description, priority, dueDate, assignee });
-    onClose();
+    setSaving(true);
+    try {
+      await updateTask({
+        ...task,
+        title:       title.trim(),
+        description: description.trim() || undefined,
+        priority,
+        status,
+        dueDate:     dueDate || undefined,
+      });
+      toast.success('Task updated');
+      onClose();
+    } catch (err: unknown) {
+      toast.error(
+        (err as { response?: { data?: { message?: string } } })
+          ?.response?.data?.message ?? 'Failed to save task'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
-
-  const inputClass =
-    'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
-  const labelClass =
-    'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400';
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50'>
       <div className='w-full max-w-lg rounded-2xl bg-white shadow-2xl'>
+
         {/* Header */}
         <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
           <h2 className='text-lg font-bold text-slate-900'>Edit Task</h2>
-          <button
-            onClick={onClose}
-            className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'
-          >
+          <button onClick={onClose} className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'>
             <X size={18} />
           </button>
         </div>
@@ -61,6 +93,7 @@ export default function EditTaskModal({ open, task, onClose, onSave }: Props) {
           <div>
             <label className={labelClass}>Task Title</label>
             <input
+              autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className={inputClass}
@@ -80,39 +113,42 @@ export default function EditTaskModal({ open, task, onClose, onSave }: Props) {
           </div>
 
           <div className='grid grid-cols-2 gap-4'>
+            {/* Priority */}
             <div>
               <label className={labelClass}>Priority</label>
               <select
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as typeof priority)}
+                onChange={(e) => setPriority(e.target.value as TaskPriority)}
                 className={inputClass}
               >
                 {priorities.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
+                  <option key={p.value} value={p.value}>{p.label}</option>
                 ))}
               </select>
             </div>
 
+            {/* Status */}
             <div>
-              <label className={labelClass}>Due Date</label>
-              <input
-                type='date'
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+              <label className={labelClass}>Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
                 className={inputClass}
-              />
+              >
+                {statuses.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div>
-            <label className={labelClass}>Assignee</label>
+            <label className={labelClass}>Due Date</label>
             <input
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
+              type='date'
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
               className={inputClass}
-              placeholder='Name or team'
             />
           </div>
         </div>
@@ -127,9 +163,10 @@ export default function EditTaskModal({ open, task, onClose, onSave }: Props) {
           </button>
           <button
             onClick={handleSave}
-            className='rounded-xl bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700'
+            disabled={!title.trim() || saving}
+            className='rounded-xl bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40'
           >
-            Save Changes
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>

@@ -186,6 +186,7 @@ export async function acceptInvitation(token: string, password: string) {
       name:       newUser.name,
       email:      newUser.email,
       systemRole: newUser.systemRole,
+      isActive:   newUser.isActive,
     },
     accessToken,
     refreshToken,

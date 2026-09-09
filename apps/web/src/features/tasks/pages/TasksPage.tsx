@@ -12,7 +12,7 @@ import TaskDetailPanel from '../components/TaskDetailPanel';
 import ListViewTask from '../components/ListViewTask';
 
 import { useTaskContext } from '@/app/Providers/TaskContext';
-import type { Task } from '../types/types';
+import type { Task, TaskStatus } from '../types/types';
 
 type FilterTab = 'Today' | 'Upcoming' | 'Completed' | 'Assigned';
 
@@ -23,7 +23,7 @@ const filterChips = [
 ];
 
 export default function TasksPage() {
-  const { tasks, updateTask, moveTask, setBoardDetailTask, boardDetailTask } =
+  const { tasks, moveTask, setBoardDetailTask, boardDetailTask } =
     useTaskContext();
 
   /* ── View ── */
@@ -32,8 +32,8 @@ export default function TasksPage() {
 
   /* ── List-view state ── */
   const [activeFilter, setActiveFilter] = useState<FilterTab>('Today');
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [editTaskId, setEditTaskId] = useState<number | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [editTaskId, setEditTaskId] = useState<string | null>(null);
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
   const taskToEdit   = tasks.find((t) => t.id === editTaskId)   ?? null;
@@ -43,21 +43,20 @@ export default function TasksPage() {
   const matchesSearch = (t: Task) =>
     !q ||
     t.title.toLowerCase().includes(q) ||
-    (t.description ?? '').toLowerCase().includes(q) ||
-    (t.assignee ?? '').toLowerCase().includes(q);
+    (t.description ?? '').toLowerCase().includes(q);
 
-  const todo      = tasks.filter((t) => t.status === 'todo'      && matchesSearch(t));
-  const progress  = tasks.filter((t) => t.status === 'progress'  && matchesSearch(t));
-  const review    = tasks.filter((t) => t.status === 'review'    && matchesSearch(t));
-  const completed = tasks.filter((t) => t.status === 'completed' && matchesSearch(t));
+  const todo       = tasks.filter((t) => t.status === 'todo'        && matchesSearch(t));
+  const inProgress = tasks.filter((t) => t.status === 'in_progress' && matchesSearch(t));
+  const inReview   = tasks.filter((t) => t.status === 'in_review'   && matchesSearch(t));
+  const done       = tasks.filter((t) => t.status === 'done'        && matchesSearch(t));
 
   /* ── DnD ── */
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
-    const id = Number(active.id);
-    const dest = over.id as Task['status'];
-    if (['todo', 'progress', 'review', 'completed'].includes(dest)) {
+    const id   = String(active.id);
+    const dest = over.id as TaskStatus;
+    if (['todo', 'in_progress', 'in_review', 'done'].includes(dest)) {
       moveTask(id, dest);
     }
   };
@@ -212,43 +211,27 @@ export default function TasksPage() {
               </div>
             ) : (
             <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4'>
-              <TaskColumn id='todo' title='To do'>
+              <TaskColumn id='todo' title='To Do'>
                 {todo.map((task) => (
-                  <TaskBoardCard
-                    key={task.id}
-                    task={task}
-                    onClick={(t) => setBoardDetailTask(t)}
-                  />
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
                 ))}
               </TaskColumn>
 
-              <TaskColumn id='progress' title='In progress'>
-                {progress.map((task) => (
-                  <TaskBoardCard
-                    key={task.id}
-                    task={task}
-                    onClick={(t) => setBoardDetailTask(t)}
-                  />
+              <TaskColumn id='in_progress' title='In Progress'>
+                {inProgress.map((task) => (
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
                 ))}
               </TaskColumn>
 
-              <TaskColumn id='review' title='In review'>
-                {review.map((task) => (
-                  <TaskBoardCard
-                    key={task.id}
-                    task={task}
-                    onClick={(t) => setBoardDetailTask(t)}
-                  />
+              <TaskColumn id='in_review' title='In Review'>
+                {inReview.map((task) => (
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
                 ))}
               </TaskColumn>
 
-              <TaskColumn id='completed' title='Done'>
-                {completed.map((task) => (
-                  <TaskBoardCard
-                    key={task.id}
-                    task={task}
-                    onClick={(t) => setBoardDetailTask(t)}
-                  />
+              <TaskColumn id='done' title='Done'>
+                {done.map((task) => (
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
                 ))}
               </TaskColumn>
             </div>
@@ -257,15 +240,10 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* Edit Task modal */}
       <EditTaskModal
         open={editTaskId !== null}
         task={taskToEdit}
         onClose={() => setEditTaskId(null)}
-        onSave={(updated) => {
-          updateTask(updated);
-          setEditTaskId(null);
-        }}
       />
 
       {/* Board task detail panel — slide from right */}
