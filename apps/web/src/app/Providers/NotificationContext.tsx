@@ -1,5 +1,7 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import api from '@/lib/axios';
+import { useAuthStore } from '@/store/authStore';
 
 export type AppNotification = {
   id: number;
@@ -10,6 +12,7 @@ export type AppNotification = {
   read: boolean;
   avatarColor?: string;
   avatarInitials?: string;
+  dbId?: string; // real DB id
 };
 
 type NotifCtx = {
@@ -23,43 +26,53 @@ type NotifCtx = {
 
 const NotificationContext = createContext<NotifCtx | null>(null);
 
-const SEED: AppNotification[] = [
-  {
-    id: 1,
-    type: 'assignment',
-    title: 'Task Assigned',
-    message: 'Sarah M. assigned you "Q4 Planning Deck"',
-    time: '5m ago',
-    read: false,
-    avatarColor: 'bg-purple-500',
-    avatarInitials: 'SM',
-  },
-  {
-    id: 2,
-    type: 'completed',
-    title: 'Task Completed',
-    message: 'Your streak reached 5 days 🔥',
-    time: '1h ago',
-    read: false,
-    avatarColor: 'bg-orange-500',
-    avatarInitials: '🔥',
-  },
-  {
-    id: 3,
-    type: 'invite',
-    title: 'Organisation Invite',
-    message: 'Rowland I. invited you to join TaskSync HQ',
-    time: '3h ago',
-    read: false,
-    avatarColor: 'bg-blue-500',
-    avatarInitials: 'RI',
-  },
-];
+let nextId = 1000;
 
-let nextId = 100;
+function typeFromString(t: string): AppNotification['type'] {
+  if (t.includes('assign')) return 'assignment';
+  if (t.includes('invite')) return 'invite';
+  if (t.includes('mention')) return 'mention';
+  if (t.includes('complet') || t.includes('done')) return 'completed';
+  return 'general';
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<AppNotification[]>(SEED);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  // Load real notifications from API on login
+  useEffect(() => {
+    if (!accessToken) { setNotifications([]); return; }
+    api.get<{ success: boolean; notifications: Array<{
+      id: string; type: string; message: string; isRead: boolean; createdAt: string;
+    }> }>('/notifications')
+      .then((res) => {
+        const mapped = (res.data.notifications ?? []).map((n) => ({
+          id: nextId++,
+          dbId: n.id,
+          type: typeFromString(n.type),
+          title: n.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          message: n.message,
+          time: timeAgo(n.createdAt),
+          read: n.isRead,
+        }));
+        setNotifications(mapped);
+      })
+      .catch(() => {
+        // Fallback to empty — no mock data
+        setNotifications([]);
+      });
+  }, [accessToken]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -70,13 +83,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     ]);
   };
 
-  const markRead = (id: number) =>
+  const markRead = (id: number) => {
+    const notif = notifications.find((n) => n.id === id);
+    // Fire-and-forget mark as read on backend
+    if (notif?.dbId) {
+      api.patch(`/notifications/${notif.dbId}/read`).catch(() => {});
+    }
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
+  };
 
-  const markAllRead = () =>
+  const markAllRead = () => {
+    api.patch('/notifications/read-all').catch(() => {});
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
 
   const dismiss = (id: number) =>
     setNotifications((prev) => prev.filter((n) => n.id !== id));

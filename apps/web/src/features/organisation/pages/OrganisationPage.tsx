@@ -1,210 +1,280 @@
-import { useState } from 'react';
-import { Camera, Globe, Users, ClipboardList, TrendingUp, Edit3, Check, Copy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, FolderOpen, CheckSquare, TrendingUp, Mail, Crown, Loader2, Search, Trash2, Send, X } from 'lucide-react';
 import AppLayout from '@/layout/AppLayout';
+import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/axios';
+import toast from 'react-hot-toast';
 
-const INDUSTRIES = ['Technology', 'Design', 'Finance', 'Healthcare', 'Education', 'Marketing', 'Other'];
+interface OrgStats {
+  totalUsers: number;
+  totalProjects: number;
+  totalTasks: number;
+  completedTasks: number;
+  completionRate: number;
+}
 
-type Org = {
+interface OrgMember {
+  id: string;
   name: string;
-  handle: string;
-  description: string;
-  industry: string;
-  website: string;
-  logoColor: string;
-  logoInitials: string;
-};
+  email: string;
+  systemRole: 'admin' | 'member';
+  isActive: boolean;
+  avatar?: string | null;
+  position?: string | null;
+  points: number;
+  isOnline: boolean;
+}
 
-const LOGO_COLORS = [
-  'bg-blue-500', 'bg-purple-500', 'bg-emerald-500',
-  'bg-orange-500', 'bg-red-500', 'bg-indigo-500',
-];
+const COLORS = ['bg-blue-500','bg-purple-500','bg-green-500','bg-orange-500','bg-pink-500','bg-teal-500'];
+function avatarColor(id: string) {
+  const s = id.split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+  return COLORS[s % COLORS.length];
+}
+function getInitials(name: string) {
+  return name.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+}
 
 export default function OrganisationPage() {
-  const [org, setOrg] = useState<Org>({
-    name: 'TaskSync HQ',
-    handle: 'tasksync-hq',
-    description: 'Building the future of collaborative task management. Fast, beautiful, and human.',
-    industry: 'Technology',
-    website: 'https://tasksync.io',
-    logoColor: 'bg-blue-500',
-    logoInitials: 'TS',
-  });
+  const currentUser = useAuthStore((s) => s.user);
+  const isAdmin     = currentUser?.systemRole === 'admin';
 
-  const [editing, setEditing]   = useState(false);
-  const [draft,   setDraft]     = useState<Org>(org);
-  const [copied,  setCopied]    = useState(false);
-  const [saved,   setSaved]     = useState(false);
+  const [stats,    setStats]    = useState<OrgStats | null>(null);
+  const [members,  setMembers]  = useState<OrgMember[]>([]);
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState('');
 
-  const inviteLink = `https://tasksync.io/invite/${org.handle}`;
+  // Invite modal
+  const [showInvite,  setShowInvite]  = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName,  setInviteName]  = useState('');
+  const [inviteRole,  setInviteRole]  = useState<'member'|'admin'>('member');
+  const [inviting,    setInviting]    = useState(false);
 
-  const handleSave = () => {
-    setOrg(draft);
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const load = () => {
+    setLoading(true);
+    Promise.all([
+      api.get<{ success: boolean; stats: OrgStats }>('/organisation/stats'),
+      api.get<{ success: boolean; members: OrgMember[] }>('/organisation/members'),
+    ]).then(([s, m]) => {
+      setStats(s.data.stats);
+      setMembers(m.data.members);
+    }).catch(() => toast.error('Failed to load organisation data'))
+      .finally(() => setLoading(false));
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(inviteLink).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  useEffect(() => { load(); }, []);
+
+  const handleRemove = async (userId: string, name: string) => {
+    if (!confirm(`Remove ${name} from the organisation?`)) return;
+    try {
+      await api.delete(`/organisation/members/${userId}`);
+      toast.success(`${name} removed`);
+      setMembers((prev) => prev.filter((m) => m.id !== userId));
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? 'Failed to remove member');
+    }
   };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim() || !inviteName.trim()) return;
+    setInviting(true);
+    try {
+      await api.post('/invitations', { email: inviteEmail.trim(), name: inviteName.trim(), systemRole: inviteRole });
+      toast.success(`Invite sent to ${inviteEmail}`);
+      setShowInvite(false);
+      setInviteEmail(''); setInviteName(''); setInviteRole('member');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? 'Failed to send invite');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const filtered = members.filter((m) =>
+    m.name.toLowerCase().includes(search.toLowerCase()) ||
+    m.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   const inp = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
-  const label = 'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400';
-
-  const stats = [
-    { icon: Users,         label: 'Members',          value: '8'   },
-    { icon: ClipboardList, label: 'Active Tasks',      value: '24'  },
-    { icon: TrendingUp,    label: 'Completed (30d)',   value: '61'  },
-    { icon: Globe,         label: 'Plan',              value: 'Pro' },
-  ];
 
   return (
     <AppLayout>
-      <div className='mx-auto max-w-3xl space-y-6'>
+      <div className='space-y-6'>
 
-        {/* ── Header card ── */}
-        <section className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-lg sm:p-8'>
-          {/* Background orb */}
-          <div className='pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10' />
-          <div className='pointer-events-none absolute -bottom-8 left-20 h-32 w-32 rounded-full bg-white/5' />
-
-          <div className='relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between'>
-            {/* Logo + info */}
-            <div className='flex items-center gap-4'>
-              <div className='relative'>
-                <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-xl font-bold text-white shadow-lg ${org.logoColor}`}>
-                  {org.logoInitials}
-                </div>
-                <button className='absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow'>
-                  <Camera size={11} className='text-slate-600' />
-                </button>
-              </div>
-              <div>
-                <h1 className='text-xl font-bold sm:text-2xl'>{org.name}</h1>
-                <p className='mt-0.5 text-sm text-blue-200'>@{org.handle}</p>
-                <span className='mt-1.5 inline-block rounded-full bg-white/20 px-3 py-0.5 text-xs font-medium'>
-                  {org.industry}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => { setDraft(org); setEditing(true); }}
-              className='flex w-fit items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/30'
-            >
-              <Edit3 size={14} />
-              Edit Organisation
-            </button>
+        {/* Header */}
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-xl font-bold text-slate-900 sm:text-2xl'>Organisation</h1>
+            <p className='mt-0.5 text-sm text-slate-400'>Manage members and organisation settings</p>
           </div>
-
-          <p className='relative mt-4 text-sm text-blue-100'>{org.description}</p>
-        </section>
-
-        {/* ── Stats row ── */}
-        <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
-          {stats.map(({ icon: Icon, label: l, value }) => (
-            <div key={l} className='flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm'>
-              <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50'>
-                <Icon size={18} className='text-blue-500' />
-              </div>
-              <p className='text-xl font-bold text-slate-900'>{value}</p>
-              <p className='text-xs text-slate-400'>{l}</p>
-            </div>
-          ))}
+          {isAdmin && (
+            <button
+              onClick={() => setShowInvite(true)}
+              className='flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700'
+            >
+              <Send size={15} />
+              Invite Member
+            </button>
+          )}
         </div>
 
-        {/* ── Invite link ── */}
-        <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-          <h2 className='mb-1 text-base font-bold text-slate-900'>Organisation Invite Link</h2>
-          <p className='mb-4 text-sm text-slate-400'>Anyone with this link can request to join your organisation.</p>
-
-          <div className='flex gap-2'>
-            <div className='flex flex-1 items-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-600 overflow-hidden'>
-              <span className='truncate'>{inviteLink}</span>
+        {/* Stats */}
+        {loading ? (
+          <div className='flex justify-center py-10'><Loader2 size={24} className='animate-spin text-blue-500' /></div>
+        ) : (
+          <>
+            <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+              {[
+                { icon: Users,       label: 'Members',     value: stats?.totalUsers ?? 0,       color: 'text-blue-600',   bg: 'bg-blue-50'   },
+                { icon: FolderOpen,  label: 'Projects',    value: stats?.totalProjects ?? 0,    color: 'text-purple-600', bg: 'bg-purple-50' },
+                { icon: CheckSquare, label: 'Tasks Done',  value: stats?.completedTasks ?? 0,   color: 'text-green-600',  bg: 'bg-green-50'  },
+                { icon: TrendingUp,  label: 'Completion',  value: `${stats?.completionRate ?? 0}%`, color: 'text-orange-600', bg: 'bg-orange-50' },
+              ].map(({ icon: Icon, label, value, color, bg }) => (
+                <div key={label} className='rounded-2xl border border-slate-200 bg-white p-5 shadow-sm'>
+                  <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${bg}`}>
+                    <Icon size={20} className={color} />
+                  </div>
+                  <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                  <p className='mt-0.5 text-sm text-slate-500'>{label}</p>
+                </div>
+              ))}
             </div>
-            <button
-              onClick={handleCopy}
-              className={`flex flex-shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-                copied ? 'bg-green-500 text-white' : 'bg-blue-500 text-white hover:bg-blue-700'
-              }`}
-            >
-              {copied ? <Check size={15} /> : <Copy size={15} />}
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-        </section>
 
-        {/* ── Logo colour picker ── */}
-        <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-          <h2 className='mb-4 text-base font-bold text-slate-900'>Organisation Logo Colour</h2>
-          <div className='flex flex-wrap gap-3'>
-            {LOGO_COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setOrg((o) => ({ ...o, logoColor: c }))}
-                className={`h-10 w-10 rounded-xl ${c} transition-transform hover:scale-110 ${
-                  org.logoColor === c ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''
-                }`}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* ── Edit modal overlay ── */}
-        {editing && (
-          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-            <div className='w-full max-w-lg rounded-2xl bg-white shadow-2xl'>
-              <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
-                <h2 className='font-bold text-slate-900'>Edit Organisation</h2>
-                <button onClick={() => setEditing(false)} className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'>✕</button>
-              </div>
-
-              <div className='space-y-4 px-6 py-5'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='col-span-2'>
-                    <label className={label}>Organisation Name</label>
-                    <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} className={inp} />
-                  </div>
-                  <div>
-                    <label className={label}>Handle</label>
-                    <input value={draft.handle} onChange={(e) => setDraft({ ...draft, handle: e.target.value })} className={inp} />
-                  </div>
-                  <div>
-                    <label className={label}>Industry</label>
-                    <select value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} className={inp}>
-                      {INDUSTRIES.map((i) => <option key={i}>{i}</option>)}
-                    </select>
-                  </div>
-                  <div className='col-span-2'>
-                    <label className={label}>Description</label>
-                    <textarea rows={3} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} className={`${inp} resize-none`} />
-                  </div>
-                  <div className='col-span-2'>
-                    <label className={label}>Website</label>
-                    <input value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} className={inp} placeholder='https://' />
-                  </div>
-                  <div className='col-span-2'>
-                    <label className={label}>Logo Initials (2 chars)</label>
-                    <input maxLength={2} value={draft.logoInitials} onChange={(e) => setDraft({ ...draft, logoInitials: e.target.value.toUpperCase() })} className={inp} />
+            {/* Members list */}
+            <div className='rounded-2xl border border-slate-200 bg-white shadow-sm'>
+              <div className='border-b border-slate-100 px-6 py-4'>
+                <div className='flex items-center gap-3'>
+                  <div className='relative flex-1'>
+                    <Search size={14} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder='Search members…'
+                      className='w-full rounded-xl border border-slate-200 py-2 pl-9 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className='flex justify-end gap-3 border-t border-slate-100 px-6 py-4'>
-                <button onClick={() => setEditing(false)} className='rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50'>Cancel</button>
-                <button
-                  onClick={handleSave}
-                  className={`rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-colors ${saved ? 'bg-green-500' : 'bg-blue-500 hover:bg-blue-700'}`}
-                >
-                  {saved ? '✓ Saved!' : 'Save Changes'}
-                </button>
+              <div className='divide-y divide-slate-100'>
+                {filtered.length === 0 ? (
+                  <div className='flex flex-col items-center py-12 text-slate-400'>
+                    <Users size={32} className='mb-3 opacity-30' />
+                    <p className='text-sm font-medium'>No members found</p>
+                  </div>
+                ) : (
+                  filtered.map((m) => (
+                    <div key={m.id} className='flex items-center gap-4 px-6 py-4'>
+                      {/* Avatar */}
+                      <div className='relative'>
+                        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${avatarColor(m.id)}`}>
+                          {getInitials(m.name)}
+                        </div>
+                        <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${m.isOnline ? 'bg-green-400' : 'bg-slate-300'}`} />
+                      </div>
+
+                      {/* Info */}
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex items-center gap-2'>
+                          <p className='truncate text-sm font-semibold text-slate-900'>
+                            {m.name}
+                            {m.id === currentUser?.id && (
+                              <span className='ml-1.5 text-xs font-normal text-slate-400'>(You)</span>
+                            )}
+                          </p>
+                          {m.systemRole === 'admin' && (
+                            <span className='flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold text-yellow-700'>
+                              <Crown size={9} /> Admin
+                            </span>
+                          )}
+                        </div>
+                        <div className='mt-0.5 flex items-center gap-1 text-xs text-slate-400'>
+                          <Mail size={11} />
+                          <span className='truncate'>{m.email}</span>
+                        </div>
+                      </div>
+
+                      {/* Points */}
+                      <div className='hidden text-right sm:block'>
+                        <p className='text-sm font-bold text-purple-600'>{m.points.toLocaleString()}</p>
+                        <p className='text-xs text-slate-400'>points</p>
+                      </div>
+
+                      {/* Status */}
+                      <span className={`hidden rounded-full px-2.5 py-1 text-xs font-medium sm:inline-flex ${
+                        m.isActive ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {m.isActive ? 'Active' : 'Inactive'}
+                      </span>
+
+                      {/* Remove */}
+                      {isAdmin && m.id !== currentUser?.id && (
+                        <button
+                          onClick={() => handleRemove(m.id, m.name)}
+                          className='rounded-lg p-2 text-slate-300 hover:bg-red-50 hover:text-red-500'
+                          title='Remove member'
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
+
+      {/* Invite Modal */}
+      {showInvite && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
+          <div className='w-full max-w-md rounded-2xl bg-white shadow-2xl'>
+            <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
+              <div>
+                <h2 className='text-base font-bold text-slate-900'>Invite Team Member</h2>
+                <p className='text-xs text-slate-400'>An email with a sign-up link will be sent</p>
+              </div>
+              <button onClick={() => setShowInvite(false)} className='rounded-lg p-1 text-slate-400 hover:bg-slate-100'>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleInvite} className='space-y-4 px-6 py-5'>
+              <div>
+                <label className='mb-1.5 block text-sm font-medium text-slate-700'>Full Name</label>
+                <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder='Danny' className={inp} required />
+              </div>
+              <div>
+                <label className='mb-1.5 block text-sm font-medium text-slate-700'>Email address</label>
+                <input type='email' value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder='danny@example.com' className={inp} required />
+              </div>
+              <div>
+                <label className='mb-1.5 block text-sm font-medium text-slate-700'>Role</label>
+                <div className='grid grid-cols-2 gap-2'>
+                  {(['member','admin'] as const).map((r) => (
+                    <button key={r} type='button' onClick={() => setInviteRole(r)}
+                      className={`rounded-xl border-2 py-2.5 text-sm font-medium transition-all ${
+                        inviteRole === r ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                      }`}>
+                      {r === 'admin' ? 'Admin — full access' : 'Member — can view & work on tasks'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button type='submit' disabled={inviting || !inviteEmail.trim() || !inviteName.trim()}
+                className='flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50'>
+                {inviting ? <Loader2 size={15} className='animate-spin' /> : <Send size={15} />}
+                Send Invite
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

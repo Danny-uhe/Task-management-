@@ -1,15 +1,19 @@
 services:
+  # ── Backend API ─────────────────────────────────────────────────────────────
   - type: web
     name: tasksync-api
     runtime: node
     plan: free
     region: ohio
     rootDir: apps/api
-    buildCommand: pnpm install --frozen-lockfile && pnpm run build
-    startCommand: pnpm exec prisma migrate deploy && pnpm run start
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm exec prisma migrate deploy && node dist/server.js
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 5000
       - key: DATABASE_URL
         sync: false
       - key: JWT_ACCESS_SECRET
@@ -19,9 +23,9 @@ services:
       - key: REDIS_URL
         sync: false
       - key: SMTP_HOST
-        sync: false
+        value: smtp.gmail.com
       - key: SMTP_PORT
-        sync: false
+        value: 465
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
@@ -29,4 +33,32 @@ services:
       - key: SMTP_FROM
         sync: false
       - key: FRONTEND_URL
+        sync: false
+      - key: ADMIN_NAME
+        value: TaskSync Admin
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+  # ── Frontend Static Site ─────────────────────────────────────────────────────
+  - type: web
+    name: tasksync-web
+    runtime: static
+    plan: free
+    region: ohio
+    rootDir: apps/web
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      # SPA fallback — all routes serve index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
         sync: false

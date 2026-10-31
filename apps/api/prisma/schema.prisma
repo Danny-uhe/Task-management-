@@ -26,6 +26,7 @@ model User {
   position String?
   isOnline Boolean @default(false)
   points   Int     @default(0)
+  streak   Int     @default(0)
 
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
@@ -41,6 +42,7 @@ model User {
   notifications       Notification[]
   organizationMembers OrganizationMember[]
   sentInvitations     Invitation[]         @relation("InvitedBy")
+  messages            Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -81,6 +83,7 @@ model project {
 
   members        projectMember[]
   tasks          Task[]
+  messages       Message[]
   organizationId String?
   organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   invitations    Invitation[]
@@ -238,4 +241,19 @@ model Invitation {
   @@index([email])
   @@index([organizationId])
   @@index([status])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  projectId String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
 }

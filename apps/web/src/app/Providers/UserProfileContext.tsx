@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useRef, useCallback } from 'react';
+import { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { userService } from '@/services/user.service';
 
 const LS_AVATAR_KEY  = 'ts_avatar_url';
 const LS_NAME_KEY    = 'ts_user_name';
@@ -53,10 +55,14 @@ type UserProfile = {
 const UserProfileContext = createContext<UserProfile | null>(null);
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
-  const [name,      setNameState]    = useState(() => ls(LS_NAME_KEY,   DEFAULT_NAME));
-  const [email,     setEmailState]   = useState(() => ls(LS_EMAIL_KEY,  'inivie@tasksync.io'));
-  const [role,      setRoleState]    = useState(() => ls(LS_ROLE_KEY,   'Product Designer'));
-  const [avatarUrl, setAvatarState]  = useState(() => ls(LS_AVATAR_KEY, DEFAULT_AVATAR));
+  const authUser = useAuthStore((s) => s.user);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const updateUser = useAuthStore((s) => s.updateUser);
+
+  const [name,      setNameState]    = useState(() => authUser?.name || ls(LS_NAME_KEY,   DEFAULT_NAME));
+  const [email,     setEmailState]   = useState(() => authUser?.email || ls(LS_EMAIL_KEY,  'inivie@tasksync.io'));
+  const [role,      setRoleState]    = useState(() => authUser?.position || ls(LS_ROLE_KEY,   'Product Designer'));
+  const [avatarUrl, setAvatarState]  = useState(() => authUser?.avatar || ls(LS_AVATAR_KEY, DEFAULT_AVATAR));
   const [points,    setPointsState]  = useState(() => lsNum(LS_POINTS_KEY, 2840));
   const [streak]   = useState(() => lsNum(LS_STREAK_KEY, 12));
   const [rank]     = useState(() => lsNum(LS_RANK_KEY, 1));
@@ -64,11 +70,108 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /* Persisted setters */
-  const setName      = (v: string) => { setNameState(v);    lsSet(LS_NAME_KEY,   v); };
-  const setEmail     = (v: string) => { setEmailState(v);   lsSet(LS_EMAIL_KEY,  v); };
-  const setRole      = (v: string) => { setRoleState(v);    lsSet(LS_ROLE_KEY,   v); };
-  const setAvatarUrl = (v: string) => { setAvatarState(v);  lsSet(LS_AVATAR_KEY, v); };
+  // Sync state when authStore user becomes available or updates
+  useEffect(() => {
+    if (authUser) {
+      if (authUser.name) {
+        setNameState(authUser.name);
+        lsSet(LS_NAME_KEY, authUser.name);
+      }
+      if (authUser.email) {
+        setEmailState(authUser.email);
+        lsSet(LS_EMAIL_KEY, authUser.email);
+      }
+      if (authUser.position !== undefined && authUser.position !== null) {
+        setRoleState(authUser.position);
+        lsSet(LS_ROLE_KEY, authUser.position);
+      }
+      if (authUser.avatar) {
+        setAvatarState(authUser.avatar);
+        lsSet(LS_AVATAR_KEY, authUser.avatar);
+      }
+    }
+  }, [authUser]);
+
+  // Fetch real user data on mount when accessToken exists
+  useEffect(() => {
+    if (!accessToken) return;
+
+    let isMounted = true;
+    userService
+      .getMe()
+      .then((res) => {
+        if (!isMounted) return;
+        const u = res.data.user;
+        if (u) {
+          if (u.name) {
+            setNameState(u.name);
+            lsSet(LS_NAME_KEY, u.name);
+          }
+          if (u.email) {
+            setEmailState(u.email);
+            lsSet(LS_EMAIL_KEY, u.email);
+          }
+          if (u.position !== undefined && u.position !== null) {
+            setRoleState(u.position);
+            lsSet(LS_ROLE_KEY, u.position);
+          }
+          if (u.avatar) {
+            setAvatarState(u.avatar);
+            lsSet(LS_AVATAR_KEY, u.avatar);
+          }
+          if (typeof u.points === 'number') {
+            setPointsState(u.points);
+            lsSet(LS_POINTS_KEY, u.points);
+          }
+
+          updateUser({
+            name: u.name,
+            email: u.email,
+            position: u.position,
+            avatar: u.avatar,
+            bio: u.bio,
+            systemRole: u.systemRole,
+            isActive: u.isActive,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load user profile:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [accessToken, updateUser]);
+
+  /* Persisted setters that also update real API and authStore */
+  const setName = (v: string) => {
+    setNameState(v);
+    lsSet(LS_NAME_KEY, v);
+    updateUser({ name: v });
+    userService.updateProfile({ name: v }).catch(console.error);
+  };
+
+  const setEmail = (v: string) => {
+    setEmailState(v);
+    lsSet(LS_EMAIL_KEY, v);
+    updateUser({ email: v });
+    userService.updateProfile({ email: v }).catch(console.error);
+  };
+
+  const setRole = (v: string) => {
+    setRoleState(v);
+    lsSet(LS_ROLE_KEY, v);
+    updateUser({ position: v });
+    userService.updateProfile({ position: v }).catch(console.error);
+  };
+
+  const setAvatarUrl = (v: string) => {
+    setAvatarState(v);
+    lsSet(LS_AVATAR_KEY, v);
+    updateUser({ avatar: v });
+    userService.updateProfile({ avatar: v }).catch(console.error);
+  };
 
   const addPoints = useCallback((amount: number, reason = 'Task completed') => {
     setPointsState((prev) => {

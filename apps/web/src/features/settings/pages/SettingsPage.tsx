@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Camera, Eye, EyeOff, Trash2, AlertTriangle,
   Zap, Flame, Trophy, Bell, Shield, Palette, Moon, Globe,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import AppLayout from '@/layout/AppLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { useUserProfile } from '@/app/Providers/UserProfileContext';
+import { useAuthStore } from '@/store/authStore';
+import { userService } from '@/services/user.service';
 
 type Tab = 'profile' | 'account' | 'notifications' | 'appearance';
 
@@ -21,6 +24,7 @@ export default function SettingsPage() {
     name, email, role, avatarUrl, points, streak, rank,
     setName, setEmail, setRole, openAvatarPicker,
   } = useUserProfile();
+  const authUser = useAuthStore((s) => s.user);
 
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 
@@ -29,8 +33,24 @@ export default function SettingsPage() {
   const [localEmail, setLocalEmail] = useState(email);
   const [localRole,  setLocalRole]  = useState(role);
   const [bio, setBio] = useState(
-    'Building beautiful, functional interfaces for teams that move fast.',
+    authUser?.bio || 'Building beautiful, functional interfaces for teams that move fast.',
   );
+
+  useEffect(() => {
+    if (name) setLocalName(name);
+  }, [name]);
+
+  useEffect(() => {
+    if (email) setLocalEmail(email);
+  }, [email]);
+
+  useEffect(() => {
+    if (role) setLocalRole(role);
+  }, [role]);
+
+  useEffect(() => {
+    if (authUser?.bio) setBio(authUser.bio);
+  }, [authUser?.bio]);
 
   /* Password fields */
   const [currentPw,   setCurrentPw]   = useState('');
@@ -59,18 +79,82 @@ export default function SettingsPage() {
   /* UI state */
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [saved,           setSaved]           = useState(false);
+  const [saving,          setSaving]          = useState(false);
 
-  const handleSave = () => {
-    if (activeTab === 'account' && newPw && newPw !== confirmPw) {
-      setPwError('Passwords do not match');
-      return;
+  const handleSave = async () => {
+    if (activeTab === 'profile') {
+      try {
+        setSaving(true);
+        const res = await userService.updateProfile({
+          name: localName,
+          bio,
+          position: localRole,
+        });
+
+        setName(localName);
+        setEmail(localEmail);
+        setRole(localRole);
+        if (res.data?.user) {
+          useAuthStore.getState().updateUser(res.data.user);
+        }
+
+        setSaved(true);
+        toast.success('Profile updated successfully');
+        setTimeout(() => setSaved(false), 2000);
+      } catch (err: unknown) {
+        const errorMsg =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Failed to update profile';
+        toast.error(errorMsg);
+      } finally {
+        setSaving(false);
+      }
+    } else if (activeTab === 'account') {
+      if (!currentPw) {
+        setPwError('Current password is required');
+        toast.error('Current password is required');
+        return;
+      }
+      if (!newPw) {
+        setPwError('New password is required');
+        toast.error('New password is required');
+        return;
+      }
+      if (newPw.length < 6) {
+        setPwError('New password must be at least 6 characters');
+        toast.error('New password must be at least 6 characters');
+        return;
+      }
+      if (newPw !== confirmPw) {
+        setPwError('Passwords do not match');
+        toast.error('Passwords do not match');
+        return;
+      }
+
+      setPwError('');
+      try {
+        setSaving(true);
+        const res = await userService.changePassword({
+          currentPassword: currentPw,
+          newPassword: newPw,
+        });
+
+        setCurrentPw('');
+        setNewPw('');
+        setConfirmPw('');
+        setSaved(true);
+        toast.success(res.data?.message || 'Password changed successfully');
+        setTimeout(() => setSaved(false), 2000);
+      } catch (err: unknown) {
+        const errorMsg =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Failed to change password';
+        setPwError(errorMsg);
+        toast.error(errorMsg);
+      } finally {
+        setSaving(false);
+      }
     }
-    setPwError('');
-    setName(localName);
-    setEmail(localEmail);
-    setRole(localRole);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
   };
 
   const inp = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
@@ -364,11 +448,12 @@ export default function SettingsPage() {
               <div className='flex justify-end'>
                 <button
                   onClick={handleSave}
+                  disabled={saving}
                   className={`rounded-xl px-8 py-3 text-sm font-semibold text-white transition-colors ${
                     saved ? 'bg-green-500' : 'bg-blue-500 hover:bg-blue-700'
-                  }`}
+                  } ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
-                  {saved ? '✓ Saved!' : 'Save Changes'}
+                  {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             )}

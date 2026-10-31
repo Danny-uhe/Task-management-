@@ -11,6 +11,7 @@ export interface OrgUser {
   avatar?:        string | null;
   position?:      string | null;
   points:         number;
+  isOnline?:      boolean;
   createdAt:      string;
 }
 
@@ -30,28 +31,36 @@ export interface InvitePayload {
   systemRole: "admin" | "member";
 }
 
-// ── Members (admin) API calls ─────────────────────────────────────────────────
+// ── Members API calls ─────────────────────────────────────────────────────────
 
 export const membersService = {
-  // Users
+  // GET /api/organisation/members — returns all users with extra fields
   listUsers() {
-    return api.get<{ success: boolean; users: OrgUser[] }>("/admin/users");
+    return api.get<{ success: boolean; members: OrgUser[] }>("/organisation/members")
+      .then((res) => ({
+        ...res,
+        data: { ...res.data, users: res.data.members },
+      }));
   },
 
+  // Change a user's systemRole to admin
   makeAdmin(userId: string) {
-    return api.patch(`/admin/users/${userId}/role`, { systemRole: "admin" });
+    return api.patch(`/users/${userId}/role`, { systemRole: "admin" });
   },
 
+  // Change a user's systemRole to member
   makeMember(userId: string) {
-    return api.patch(`/admin/users/${userId}/role`, { systemRole: "member" });
+    return api.patch(`/users/${userId}/role`, { systemRole: "member" });
   },
 
+  // Deactivate (soft-delete) a user
   deactivate(userId: string) {
-    return api.patch(`/admin/users/${userId}/deactivate`);
+    return api.delete(`/organisation/members/${userId}`);
   },
 
+  // Re-activate a user
   activate(userId: string) {
-    return api.patch(`/admin/users/${userId}/activate`);
+    return api.patch(`/organisation/members/${userId}/activate`);
   },
 
   // Invitations
@@ -71,3 +80,4 @@ export const membersService = {
     return api.post(`/invitations/${inviteId}/resend`);
   },
 };
+

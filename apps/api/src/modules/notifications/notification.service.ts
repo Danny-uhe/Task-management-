@@ -1,4 +1,5 @@
 import { prisma } from "../../config/prisma.js"
+import { emitNotification } from "../../sockets/handlers/notification.handler.js";
 
 export async function createNotification(
     userId: string,
@@ -6,7 +7,7 @@ export async function createNotification(
     message: string,
     relatedId?: string
 ) {
-    return prisma.notification.create({
+    const notification = await prisma.notification.create({
         data: {
             userId,
             type,
@@ -14,6 +15,11 @@ export async function createNotification(
             relatedId,
         },
     });
+
+    // Push live to user's socket room
+    emitNotification(userId, notification);
+
+    return notification;
 }
 
 export async function getUserNotifications(userId: string) {

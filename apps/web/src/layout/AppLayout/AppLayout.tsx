@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { X, LayoutDashboard, ClipboardList, Trophy, Activity, Archive, Settings, LogOut, CircleHelp, Users, Building2 } from 'lucide-react';
 
@@ -6,8 +6,10 @@ import type { AppLayoutProps } from './AppLayout.types';
 import AppHeader  from './AppHeader';
 import AddTaskModal from '@/features/tasks/components/AddTaskModal';
 import PointsToast  from '@/features/shared/PointsToast';
-import { useAuthStore } from '@/store/authStore';
-import { authService }  from '@/features/auth/services/auth.services';
+import { useAuthStore }    from '@/store/authStore';
+import { authService }     from '@/features/auth/services/auth.services';
+import { useProjectStore } from '@/store/projectStore';
+import ProjectSwitcher     from '@/features/projects/components/ProjectSwitcher';
 
 const allNavItems = [
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard',    adminOnly: false },
@@ -23,6 +25,10 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   const navigate  = useNavigate();
   const { user, refreshToken, clearAuth } = useAuthStore();
   const isAdmin   = user?.systemRole === 'admin';
+  const fetchProjects = useProjectStore((s) => s.fetchProjects);
+
+  // Load projects once when sidebar mounts
+  useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
   // Only show nav items the current user is allowed to see
   const navItems  = allNavItems.filter((item) => !item.adminOnly || isAdmin);
@@ -37,7 +43,6 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       navigate('/login');
     }
   };
-
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
@@ -64,6 +69,11 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             <X size={18} />
           </button>
         )}
+      </div>
+
+      {/* Project Switcher */}
+      <div className='border-b border-gray-100 py-3'>
+        <ProjectSwitcher />
       </div>
 
       {/* Nav */}

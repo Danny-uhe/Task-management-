@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, CalendarDays, Upload, Trash2, FileText, ImageIcon, File } from 'lucide-react';
+import { X, CalendarDays, Upload, Trash2, FileText, ImageIcon, File, UserCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTaskContext } from '@/app/Providers/TaskContext';
 import { projectService, type ApiProject } from '@/services/project.service';
+import api from '@/lib/axios';
 import type { TaskStatus, TaskPriority } from '../types/types';
 
 /* ── helpers ─────────────────────────────────────────────────────────────── */
@@ -21,6 +22,7 @@ const statuses: { value: TaskStatus; label: string }[] = [
 ];
 
 type AttachedFile = { name: string; size: string; type: 'pdf' | 'image' | 'file' };
+type Member = { id: string; name: string; avatar?: string | null; role?: string };
 
 function fileIcon(type: AttachedFile['type']) {
   if (type === 'pdf')   return <FileText  size={16} className='text-red-500'  />;
@@ -41,35 +43,63 @@ function fmt(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
+}
+
 /* ── Component ───────────────────────────────────────────────────────────── */
 
 export default function AddTaskModal() {
   const { addTaskOpen, closeAddTask, addTask } = useTaskContext();
 
   /* Form state */
-  const [title,       setTitle]       = useState('');
-  const [description, setDescription] = useState('');
-  const [priority,    setPriority]    = useState<TaskPriority>('medium');
-  const [status,      setStatus]      = useState<TaskStatus>('todo');
-  const [dueDate,     setDueDate]     = useState('');
-  const [attachments, setAttachments] = useState<AttachedFile[]>([]);
-  const [dragging,    setDragging]    = useState(false);
-  const [saving,      setSaving]      = useState(false);
+  const [title,        setTitle]        = useState('');
+  const [description,  setDescription]  = useState('');
+  const [priority,     setPriority]     = useState<TaskPriority>('medium');
+  const [status,       setStatus]       = useState<TaskStatus>('todo');
+  const [dueDate,      setDueDate]      = useState('');
+  const [assignedToId, setAssignedToId] = useState('');
+  const [attachments,  setAttachments]  = useState<AttachedFile[]>([]);
+  const [dragging,     setDragging]     = useState(false);
+  const [saving,       setSaving]       = useState(false);
 
-  /* Projects */
-  const [projects,    setProjects]    = useState<ApiProject[]>([]);
-  const [projectId,   setProjectId]   = useState('');
+  /* Data */
+  const [projects, setProjects] = useState<ApiProject[]>([]);
+  const [projectId, setProjectId] = useState('');
+  const [members,  setMembers]  = useState<Member[]>([]);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
-  /* Load projects when modal opens */
+  /* Load projects + members when modal opens */
   useEffect(() => {
     if (!addTaskOpen) return;
     projectService.getProjects().then((res) => {
-      setProjects(res.data.projects);
-      if (res.data.projects.length > 0) setProjectId(res.data.projects[0].id);
+      const projs = res.data.projects;
+      setProjects(projs);
+      if (projs.length > 0) setProjectId(projs[0].id);
     }).catch(() => toast.error('Could not load projects'));
   }, [addTaskOpen]);
+
+  /* When projectId changes, load ALL org users as potential assignees */
+  useEffect(() => {
+    if (!projectId) { setMembers([]); return; }
+    api.get<{ success: boolean; members: { user: Member }[] }>(
+      `/projects/${projectId}/members`
+    ).then((res) => {
+      const projMembers = res.data.members.map((m) => m.user);
+      // Also fetch all org users so newly invited people appear
+      return api.get<{ success: boolean; users: Member[] }>('/users')
+        .then((usersRes) => {
+          const allUsers = usersRes.data.users ?? [];
+          // Merge: project members first, then any org users not already listed
+          const projIds = new Set(projMembers.map((m) => m.id));
+          const extras = allUsers.filter((u) => !projIds.has(u.id));
+          setMembers([...projMembers, ...extras]);
+        })
+        .catch(() => setMembers(projMembers)); // fallback to project members only
+    }).catch(() => setMembers([]));
+  }, [projectId]);
+
 
   if (!addTaskOpen) return null;
 
@@ -89,12 +119,13 @@ export default function AddTaskModal() {
     setSaving(true);
     try {
       await addTask(projectId, {
-        title:       title.trim(),
-        description: description.trim() || undefined,
+        title:        title.trim(),
+        description:  description.trim() || undefined,
         priority,
         status,
-        dueDate:     dueDate || undefined,
-        points:      0,
+        dueDate:      dueDate || undefined,
+        points:       0,
+        assignedToId: assignedToId || undefined,
       });
       toast.success('Task created');
       reset();
@@ -111,7 +142,8 @@ export default function AddTaskModal() {
 
   const reset = () => {
     setTitle(''); setDescription(''); setPriority('medium');
-    setStatus('todo'); setDueDate(''); setAttachments([]); setDragging(false);
+    setStatus('todo'); setDueDate(''); setAttachments([]);
+    setDragging(false); setAssignedToId('');
   };
 
   const handleClose = () => { reset(); closeAddTask(); };
@@ -173,6 +205,48 @@ export default function AddTaskModal() {
               rows={3}
               className={`${inp} resize-none`}
             />
+          </div>
+
+          {/* Assign to */}
+          <div>
+            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Assign to</label>
+            {members.length === 0 ? (
+              <p className='text-xs text-slate-400'>No members in this project yet.</p>
+            ) : (
+              <div className='flex flex-wrap gap-2'>
+                {/* Unassigned option */}
+                <button
+                  type='button'
+                  onClick={() => setAssignedToId('')}
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                    assignedToId === ''
+                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                  }`}
+                >
+                  <UserCircle2 size={13} />
+                  Unassigned
+                </button>
+
+                {members.map((m) => (
+                  <button
+                    key={m.id}
+                    type='button'
+                    onClick={() => setAssignedToId(m.id)}
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                      assignedToId === m.id
+                        ? 'border-blue-500 bg-blue-50 text-blue-600'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className='flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white'>
+                      {getInitials(m.name)}
+                    </span>
+                    {m.name.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Due date */}

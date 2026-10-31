@@ -4,6 +4,7 @@ import ToastProvider from './ToastProvider';
 import { UserProfileProvider } from './UserProfileContext';
 import { TaskProvider } from './TaskContext';
 import { NotificationProvider } from './NotificationContext';
+import { SocketProvider } from './SocketProvider';
 
 interface Props { children: ReactNode; }
 
@@ -12,10 +13,12 @@ export default function AppProvider({ children }: Props) {
     <QueryProvider>
       <UserProfileProvider>
         <NotificationProvider>
-          <TaskProvider>
-            {children}
-            <ToastProvider />
-          </TaskProvider>
+          <SocketProvider>
+            <TaskProvider>
+              {children}
+              <ToastProvider />
+            </TaskProvider>
+          </SocketProvider>
         </NotificationProvider>
       </UserProfileProvider>
     </QueryProvider>

@@ -1,6 +1,8 @@
 import { prisma } from "../../config/prisma.js";
 import { CreateTaskInput, UpdateTaskInput } from "./task.validation.js";
 import { createNotification } from "../notifications/notification.service.js";
+import { getIO } from "../../sockets/socket.js";
+import { awardPoints } from "../gamification/gamification.service.js";
 
 
 export async function createTask(
@@ -89,6 +91,9 @@ export async function createTask(
       task.id
     );
   }
+
+  // 6. Broadcast to project room
+  try { getIO().to(`project:${projectId}`).emit("task_updated", { action: "created", task }); } catch { /* socket not ready */ }
 
   return task;
 }
@@ -292,10 +297,8 @@ export async function updateTask(
     }
   }
 
-  return prisma.task.update({
-    where: {
-      id: taskId,
-    },
+  const updated = await prisma.task.update({
+    where: { id: taskId },
     data: {
       title: data.title,
       description: data.description,
@@ -314,6 +317,17 @@ export async function updateTask(
           : data.assignedToId,
     },
   });
+
+  if (data.status === "done" && task.status !== "done") {
+    const assigneeId = updated.assignedToId ?? task.assignedToId;
+    if (assigneeId) {
+      await awardPoints(assigneeId, 50);
+    }
+  }
+
+  try { getIO().to(`project:${updated.projectId}`).emit("task_updated", { action: "updated", task: updated }); } catch { /* socket not ready */ }
+
+  return updated;
 }
 
 export async function deleteTask(
@@ -343,11 +357,9 @@ export async function deleteTask(
     throw new Error("You are not a member of this project");
   }
 
-  await prisma.task.delete({
-    where: {
-      id: taskId,
-    },
-  });
+  await prisma.task.delete({ where: { id: taskId } });
+
+  try { getIO().to(`project:${task.projectId}`).emit("task_updated", { action: "deleted", taskId }); } catch { /* socket not ready */ }
 
   return true;
 }
