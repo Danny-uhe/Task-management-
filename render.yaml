@@ -25,7 +25,7 @@ services:
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
-        value: 465
+        value: 587
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
@@ -47,9 +47,9 @@ services:
     runtime: static
     plan: free
     region: ohio
-    rootDir: apps/web
-    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build
-    staticPublishPath: dist
+    # No rootDir — build runs from repo root so pnpm workspace install works
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter web build
+    staticPublishPath: apps/web/dist
     headers:
       - path: /*
         name: Cache-Control
