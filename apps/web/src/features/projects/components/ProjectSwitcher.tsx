@@ -1,5 +1,5 @@
-﻿import { useState } from "react";
-import { ChevronDown, Plus, Folder } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Plus } from "lucide-react";
 import { useProjectStore } from "@/store/projectStore";
 import CreateProjectModal from "./CreateProjectModal";
 import { useAuthStore } from "@/store/authStore";
