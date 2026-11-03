@@ -1,0 +1,651 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TaskSync API",
+    "description": "Complete REST API for TaskSync — a collaborative task management platform with real-time chat, gamification, and team organisation features.",
+    "version": "1.0.0",
+    "contact": { "name": "TaskSync Team" }
+  },
+  "servers": [
+    { "url": "/api", "description": "API base path" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT access token from /auth/login"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id":         { "type": "string" },
+          "name":       { "type": "string" },
+          "email":      { "type": "string", "format": "email" },
+          "systemRole": { "type": "string", "enum": ["admin", "member"] },
+          "isActive":   { "type": "boolean" },
+          "isOnline":   { "type": "boolean" },
+          "avatar":     { "type": "string", "nullable": true },
+          "bio":        { "type": "string", "nullable": true },
+          "position":   { "type": "string", "nullable": true },
+          "points":     { "type": "integer" },
+          "streak":     { "type": "integer" },
+          "createdAt":  { "type": "string", "format": "date-time" }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id":          { "type": "string" },
+          "name":        { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "createdAt":   { "type": "string", "format": "date-time" },
+          "updatedAt":   { "type": "string", "format": "date-time" }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id":           { "type": "string" },
+          "title":        { "type": "string" },
+          "description":  { "type": "string", "nullable": true },
+          "status":       { "type": "string", "enum": ["todo", "in_progress", "review", "completed"] },
+          "priority":     { "type": "string", "enum": ["low", "medium", "high"] },
+          "dueDate":      { "type": "string", "format": "date-time", "nullable": true },
+          "projectId":    { "type": "string" },
+          "assignedToId": { "type": "string", "nullable": true },
+          "createdById":  { "type": "string" },
+          "createdAt":    { "type": "string", "format": "date-time" }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string" },
+          "content":   { "type": "string" },
+          "userId":    { "type": "string" },
+          "projectId": { "type": "string" },
+          "user":      { "$ref": "#/components/schemas/User" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string" },
+          "type":      { "type": "string" },
+          "message":   { "type": "string" },
+          "isRead":    { "type": "boolean" },
+          "userId":    { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Invitation": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string" },
+          "email":     { "type": "string", "format": "email" },
+          "role":      { "type": "string" },
+          "status":    { "type": "string", "enum": ["pending", "accepted", "cancelled"] },
+          "token":     { "type": "string" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id":        { "type": "string" },
+          "content":   { "type": "string" },
+          "taskId":    { "type": "string" },
+          "userId":    { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [{ "BearerAuth": [] }],
+  "tags": [
+    { "name": "Auth",           "description": "Authentication & session management" },
+    { "name": "Users",          "description": "User profile & account" },
+    { "name": "Projects",       "description": "Project CRUD & members" },
+    { "name": "Tasks",          "description": "Task CRUD & attachments" },
+    { "name": "Comments",       "description": "Task comments" },
+    { "name": "Messages",       "description": "Project chat messages" },
+    { "name": "Notifications",  "description": "User notifications" },
+    { "name": "Organisation",   "description": "Org management (admin only)" },
+    { "name": "Invitations",    "description": "Team invitations" },
+    { "name": "Activity",       "description": "Activity feed" },
+    { "name": "Leaderboard",    "description": "Gamification & leaderboard" },
+    { "name": "Admin",          "description": "Admin user management" },
+    { "name": "Health",         "description": "Health check" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" }, "timestamp": { "type": "string" } } } } }
+          }
+        }
+      }
+    },
+
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Log in with email & password",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string", "format": "email" }, "password": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Login successful — returns access token, refresh token, and user" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh access token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["refreshToken"], "properties": { "refreshToken": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "New access token issued" },
+          "401": { "description": "Invalid or expired refresh token" }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request password reset email",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Reset email sent (if account exists)" }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password with token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["token", "password"], "properties": { "token": { "type": "string" }, "password": { "type": "string", "minLength": 8 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Password reset successful" },
+          "400": { "description": "Invalid or expired token" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current authenticated user",
+        "responses": {
+          "200": { "description": "Current user profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Log out (invalidate current refresh token)",
+        "responses": { "200": { "description": "Logged out" } }
+      }
+    },
+    "/auth/logout-all": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Log out from all devices",
+        "responses": { "200": { "description": "All sessions invalidated" } }
+      }
+    },
+
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List all users",
+        "responses": { "200": { "description": "Array of users" } }
+      }
+    },
+    "/users/me": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update my profile",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" }, "bio": { "type": "string" }, "position": { "type": "string" }, "avatar": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Profile updated" } }
+      }
+    },
+    "/users/me/password": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Change my password",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["currentPassword", "newPassword"], "properties": { "currentPassword": { "type": "string" }, "newPassword": { "type": "string", "minLength": 8 } } } } }
+        },
+        "responses": {
+          "200": { "description": "Password changed" },
+          "400": { "description": "Current password incorrect" }
+        }
+      }
+    },
+
+    "/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "List projects I belong to",
+        "responses": { "200": { "description": "Array of projects" } }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create a new project (admin only)",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "description": { "type": "string" } } } } }
+        },
+        "responses": {
+          "201": { "description": "Project created" },
+          "403": { "description": "Admin access required" }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Project details" }, "404": { "description": "Not found" } }
+      },
+      "patch": {
+        "tags": ["Projects"],
+        "summary": "Update a project",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" }, "description": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Project updated" } }
+      },
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Delete a project",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Project deleted" } }
+      }
+    },
+    "/projects/{id}/members": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "List project members",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Array of project members with user details" } }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Add a member to a project",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["userId"], "properties": { "userId": { "type": "string" }, "role": { "type": "string", "default": "member" } } } } }
+        },
+        "responses": { "201": { "description": "Member added" } }
+      }
+    },
+
+    "/projects/{projectId}/tasks": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "List tasks for a project",
+        "parameters": [{ "name": "projectId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Array of tasks" } }
+      },
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Create a task in a project",
+        "parameters": [{ "name": "projectId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["title"], "properties": { "title": { "type": "string" }, "description": { "type": "string" }, "status": { "type": "string", "enum": ["todo", "in_progress", "review", "completed"] }, "priority": { "type": "string", "enum": ["low", "medium", "high"] }, "dueDate": { "type": "string", "description": "YYYY-MM-DD or ISO datetime" }, "assignedToId": { "type": "string" } } } } }
+        },
+        "responses": { "201": { "description": "Task created" } }
+      }
+    },
+    "/tasks/{taskId}": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Get a task by ID",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Task details" } }
+      },
+      "patch": {
+        "tags": ["Tasks"],
+        "summary": "Update a task",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "title": { "type": "string" }, "description": { "type": "string" }, "status": { "type": "string" }, "priority": { "type": "string" }, "dueDate": { "type": "string" }, "assignedToId": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Task updated" } }
+      },
+      "delete": {
+        "tags": ["Tasks"],
+        "summary": "Delete a task",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Task deleted" } }
+      }
+    },
+    "/tasks/{taskId}/attachments": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "List attachments for a task",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Array of attachments" } }
+      },
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Upload attachments to a task",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "attachments": { "type": "array", "items": { "type": "string", "format": "binary" }, "maxItems": 10 } } } } }
+        },
+        "responses": { "201": { "description": "Attachments uploaded" } }
+      }
+    },
+
+    "/tasks/{taskId}/comments": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "List comments on a task",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Array of comments" } }
+      },
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Add a comment to a task",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["content"], "properties": { "content": { "type": "string" } } } } }
+        },
+        "responses": { "201": { "description": "Comment created" } }
+      }
+    },
+    "/comments/{commentId}": {
+      "patch": {
+        "tags": ["Comments"],
+        "summary": "Update a comment",
+        "parameters": [{ "name": "commentId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["content"], "properties": { "content": { "type": "string" } } } } }
+        },
+        "responses": { "200": { "description": "Comment updated" } }
+      },
+      "delete": {
+        "tags": ["Comments"],
+        "summary": "Delete a comment",
+        "parameters": [{ "name": "commentId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Comment deleted" } }
+      }
+    },
+
+    "/projects/{projectId}/messages": {
+      "get": {
+        "tags": ["Messages"],
+        "summary": "List messages in a project chat",
+        "parameters": [{ "name": "projectId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Array of messages with user info" } }
+      },
+      "post": {
+        "tags": ["Messages"],
+        "summary": "Send a message in a project chat",
+        "parameters": [{ "name": "projectId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["content"], "properties": { "content": { "type": "string" } } } } }
+        },
+        "responses": { "201": { "description": "Message sent (also broadcast via WebSocket)" } }
+      }
+    },
+    "/projects/{projectId}/messages/{messageId}": {
+      "delete": {
+        "tags": ["Messages"],
+        "summary": "Delete a message",
+        "parameters": [
+          { "name": "projectId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "messageId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Message deleted" } }
+      }
+    },
+
+    "/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get my notifications",
+        "responses": { "200": { "description": "Array of notifications" } }
+      }
+    },
+    "/notifications/{id}/read": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Mark a notification as read",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Notification marked as read" } }
+      }
+    },
+    "/notifications/read-all": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Mark all my notifications as read",
+        "responses": { "200": { "description": "All notifications marked as read" } }
+      }
+    },
+    "/notifications/{id}": {
+      "delete": {
+        "tags": ["Notifications"],
+        "summary": "Delete a notification",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Notification deleted" } }
+      }
+    },
+
+    "/organisation/stats": {
+      "get": {
+        "tags": ["Organisation"],
+        "summary": "Get organisation statistics (admin only)",
+        "responses": { "200": { "description": "Org stats: total users, projects, tasks, completedTasks" }, "403": { "description": "Admin access required" } }
+      }
+    },
+    "/organisation/members": {
+      "get": {
+        "tags": ["Organisation"],
+        "summary": "List all organisation members (admin only)",
+        "responses": { "200": { "description": "Array of members with stats" }, "403": { "description": "Admin access required" } }
+      }
+    },
+    "/organisation/invite": {
+      "post": {
+        "tags": ["Organisation"],
+        "summary": "Invite a user to the organisation (admin only)",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" }, "role": { "type": "string", "default": "member" } } } } }
+        },
+        "responses": { "201": { "description": "Invitation sent" }, "403": { "description": "Admin access required" } }
+      }
+    },
+    "/organisation/members/{userId}": {
+      "delete": {
+        "tags": ["Organisation"],
+        "summary": "Remove a member from the organisation (admin only)",
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Member removed" } }
+      }
+    },
+    "/organisation/members/{userId}/activate": {
+      "patch": {
+        "tags": ["Organisation"],
+        "summary": "Activate a deactivated member (admin only)",
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Member activated" } }
+      }
+    },
+    "/organisation/members/{userId}/role": {
+      "patch": {
+        "tags": ["Organisation"],
+        "summary": "Change a member's role (admin only)",
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["role"], "properties": { "role": { "type": "string", "enum": ["admin", "member"] } } } } }
+        },
+        "responses": { "200": { "description": "Role updated" } }
+      }
+    },
+
+    "/invitations": {
+      "get": {
+        "tags": ["Invitations"],
+        "summary": "List all invitations (admin only)",
+        "responses": { "200": { "description": "Array of invitations" } }
+      },
+      "post": {
+        "tags": ["Invitations"],
+        "summary": "Send an invitation (admin only)",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" }, "role": { "type": "string" } } } } }
+        },
+        "responses": { "201": { "description": "Invitation sent" } }
+      }
+    },
+    "/invitations/{id}/resend": {
+      "post": {
+        "tags": ["Invitations"],
+        "summary": "Resend an invitation email (admin only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Invitation resent" } }
+      }
+    },
+    "/invitations/{id}/cancel": {
+      "patch": {
+        "tags": ["Invitations"],
+        "summary": "Cancel a pending invitation (admin only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Invitation cancelled" } }
+      }
+    },
+    "/invitations/{token}": {
+      "get": {
+        "tags": ["Invitations"],
+        "summary": "Get invitation details by token (public)",
+        "security": [],
+        "parameters": [{ "name": "token", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Invitation details" }, "404": { "description": "Invalid or expired token" } }
+      }
+    },
+    "/invitations/{token}/accept": {
+      "post": {
+        "tags": ["Invitations"],
+        "summary": "Accept an invitation and create account (public)",
+        "security": [],
+        "parameters": [{ "name": "token", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["name", "password"], "properties": { "name": { "type": "string" }, "password": { "type": "string", "minLength": 8 } } } } }
+        },
+        "responses": { "201": { "description": "Account created and invitation accepted" } }
+      }
+    },
+
+    "/activity": {
+      "get": {
+        "tags": ["Activity"],
+        "summary": "Get my activity feed",
+        "responses": { "200": { "description": "Array of activity items" } }
+      }
+    },
+    "/activity/org": {
+      "get": {
+        "tags": ["Activity"],
+        "summary": "Get organisation-wide activity (admin only)",
+        "responses": { "200": { "description": "Array of org activity items" }, "403": { "description": "Admin access required" } }
+      }
+    },
+
+    "/leaderboard": {
+      "get": {
+        "tags": ["Leaderboard"],
+        "summary": "Get the gamification leaderboard",
+        "responses": { "200": { "description": "Array of users ranked by points" } }
+      }
+    },
+
+    "/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List all users (admin only)",
+        "responses": { "200": { "description": "Array of all users" }, "403": { "description": "Admin access required" } }
+      }
+    },
+    "/admin/users/{id}/role": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Change a user's system role (admin only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["role"], "properties": { "role": { "type": "string", "enum": ["admin", "member"] } } } } }
+        },
+        "responses": { "200": { "description": "Role updated" } }
+      }
+    },
+    "/admin/users/{id}/deactivate": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Deactivate a user (admin only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "User deactivated" } }
+      }
+    },
+    "/admin/users/{id}/activate": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Activate a user (admin only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "User activated" } }
+      }
+    }
+  }
+}

@@ -5,6 +5,8 @@ import morgan from "morgan";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
+import { swaggerSpec } from "./config/swagger.js";
+import swaggerUi from "swagger-ui-express";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +62,12 @@ app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// ── Swagger API Docs ───────────────────────────────────────────────────────
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: "TaskSync API Docs",
+  customCss: ".swagger-ui .topbar { display: none }",
+}));
 
 // Admin Routes
 app.use("/api/admin", adminRoutes);
