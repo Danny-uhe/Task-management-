@@ -6,7 +6,7 @@ services:
     plan: free
     region: ohio
     rootDir: apps/api
-    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
     startCommand: pnpm exec prisma migrate deploy && node dist/server.js
     healthCheckPath: /api/health
     envVars:
@@ -48,7 +48,7 @@ services:
     plan: free
     region: ohio
     # No rootDir — build runs from repo root so pnpm workspace install works
-    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter web build
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter web build
     staticPublishPath: apps/web/dist
     headers:
       - path: /*
