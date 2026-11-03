@@ -36,9 +36,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. curl, Postman, mobile)
+      // Allow requests with no origin (curl, Postman, mobile apps)
       if (!origin) return callback(null, true);
+      // Allow any exact match
       if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Allow any *.onrender.com preview URL (staging / PR deploys)
+      if (origin.endsWith(".onrender.com")) return callback(null, true);
       callback(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true,
