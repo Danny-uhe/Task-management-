@@ -23,6 +23,43 @@ async function seedOrganisation() {
   }
 }
 
+// ── Seed admin user from env vars (production bootstrap) ───────────────────
+async function seedAdmin() {
+  const email    = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  const name     = process.env.ADMIN_NAME ?? "Admin";
+
+  if (!email || !password) return; // env vars not set — skip silently
+
+  try {
+    const bcrypt = await import("bcrypt");
+    const hashed = await bcrypt.hash(password, 12);
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+
+    if (existing) {
+      if (existing.systemRole === "admin") {
+        console.log("[Admin] Admin user already exists ✅");
+        return;
+      }
+      await prisma.user.update({
+        where: { email },
+        data:  { systemRole: "admin", isActive: true, password: hashed },
+      });
+      console.log(`[Admin] Existing user promoted to admin: ${email}`);
+      return;
+    }
+
+    await prisma.user.create({
+      data: { name, email, password: hashed, systemRole: "admin", isActive: true },
+    });
+    console.log(`[Admin] Admin created: ${email}`);
+  } catch (err) {
+    console.error("[Admin] Failed to seed admin:", (err as Error).message);
+    // Non-fatal — server still starts
+  }
+}
+
 // ── Create HTTP server (shared by Express + Socket.io) ─────────────────────
 const httpServer = createServer(app);
 
@@ -36,7 +73,7 @@ const emailWorker = startEmailWorker();
 verifyMailer();
 
 // ── Start HTTP server ──────────────────────────────────────────────────────
-seedOrganisation().then(() => {
+seedOrganisation().then(() => seedAdmin()).then(() => {
   httpServer.listen(PORT, () => {
     console.log(`[Server] Running on http://localhost:${PORT}`);
     startKeepAlive(); // Ping DB every 4min so Neon never sleeps
