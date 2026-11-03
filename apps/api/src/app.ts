@@ -64,10 +64,14 @@ app.get("/api/health", (_, res) => {
 });
 
 // ── Swagger API Docs ───────────────────────────────────────────────────────
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+app.use("/api/docs", swaggerUi.serve);
+app.get("/api/docs", swaggerUi.setup(swaggerSpec, {
   customSiteTitle: "TaskSync API Docs",
   customCss: ".swagger-ui .topbar { display: none }",
 }));
+
+// Also serve the raw OpenAPI spec as JSON
+app.get("/api/docs.json", (_, res) => { res.json(swaggerSpec); });
 
 // Admin Routes
 app.use("/api/admin", adminRoutes);

@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "postinstall": "prisma generate",
-    "build": "tsc && node -e \"require('fs').cpSync('src/config/swagger.json','dist/config/swagger.json')\"",
+    "build": "tsc && node --input-type=commonjs -e \"require('fs').cpSync('src/config/swagger.json','dist/config/swagger.json')\"",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "admin:create": "tsx scripts/create-admin.ts",
