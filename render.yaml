@@ -5,9 +5,8 @@ services:
     runtime: node
     plan: free
     region: ohio
-    rootDir: apps/api
-    buildCommand: pnpm install --frozen-lockfile && pnpm run build
-    startCommand: pnpm exec prisma migrate deploy && node dist/server.js
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @tasksync/api run build
+    startCommand: cd apps/api && npx prisma migrate deploy && node dist/server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
