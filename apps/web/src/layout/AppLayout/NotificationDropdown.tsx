@@ -1,4 +1,5 @@
-import { CheckCheck, X, Bell, UserPlus, CheckCircle2, AtSign, Users } from 'lucide-react';
+import { CheckCheck, X, Bell, UserPlus, CheckCircle2, AtSign, Users, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '@/app/Providers/NotificationContext';
 import type { AppNotification } from '@/app/Providers/NotificationContext';
 
@@ -7,10 +8,12 @@ const typeIcon: Record<AppNotification['type'], { icon: React.ElementType; bg: s
   invite:     { icon: UserPlus,     bg: 'bg-purple-100', color: 'text-purple-600' },
   completed:  { icon: CheckCircle2, bg: 'bg-green-100',  color: 'text-green-600'  },
   mention:    { icon: AtSign,       bg: 'bg-orange-100', color: 'text-orange-500' },
+  message:    { icon: MessageCircle, bg: 'bg-blue-100', color: 'text-blue-600' },
   general:    { icon: Users,        bg: 'bg-slate-100',  color: 'text-slate-500'  },
 };
 
 export default function NotificationDropdown() {
+  const navigate = useNavigate();
   const { notifications, markAllRead, markRead, dismiss } = useNotifications();
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -46,8 +49,7 @@ export default function NotificationDropdown() {
             return (
               <div
                 key={n.id}
-                onClick={() => markRead(n.id)}
-                className={`group flex cursor-pointer items-start gap-3 border-b border-slate-50 px-4 py-3 transition last:border-0 hover:bg-slate-50 ${
+                className={`group flex items-start gap-3 border-b border-slate-50 px-4 py-3 transition last:border-0 hover:bg-slate-50 ${
                   n.read ? '' : 'bg-blue-50/40'
                 }`}
               >
@@ -62,11 +64,20 @@ export default function NotificationDropdown() {
                   )}
                 </div>
 
-                <div className='min-w-0 flex-1'>
+                <button
+                  type='button'
+                  onClick={() => {
+                    markRead(n.id);
+                    if (n.type === 'message' && n.relatedId) {
+                      navigate(`/profile/${n.relatedId}?message=1`);
+                    }
+                  }}
+                  className='min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+                >
                   <p className='text-xs font-semibold text-slate-700'>{n.title}</p>
                   <p className='mt-0.5 text-xs leading-snug text-slate-500'>{n.message}</p>
                   <p className='mt-1 text-[10px] text-slate-400'>{n.time}</p>
-                </div>
+                </button>
 
                 <div className='flex flex-shrink-0 flex-col items-end gap-1'>
                   {!n.read && <span className='h-2 w-2 rounded-full bg-blue-500' />}

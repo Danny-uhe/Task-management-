@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { Plus, Folder, CheckSquare, Users, Loader2 } from 'lucide-react';
+import { Plus, Folder, CheckSquare, Users, UserPlus, Loader2 } from 'lucide-react';
 import AppLayout from '@/layout/AppLayout';
 import TodayProgressCard from '@/features/dashboard/components/TodayProgressCard';
 import { useTaskContext } from '@/app/Providers/TaskContext';
@@ -8,6 +8,8 @@ import { useAuthStore } from '@/store/authStore';
 import EditTaskModal from '@/features/tasks/components/EditTaskModal';
 import TaskDetailPanel from '@/features/tasks/components/TaskDetailPanel';
 import CreateProjectModal from '@/features/projects/components/CreateProjectModal';
+import ProjectMembersDialog from '@/features/projects/components/ProjectMembersDialog';
+import type { ApiProject } from '@/services/project.service';
 import type { Task } from '@/features/tasks/types/types';
 
 export default function DashboardPage() {
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const [viewTask,       setViewTask]       = useState<Task | null>(null);
   const [editTask,       setEditTask]       = useState<Task | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
+  const [memberProject,  setMemberProject]  = useState<ApiProject | null>(null);
 
   // Tasks for the active project
   const projectTasks = activeProject
@@ -101,58 +104,78 @@ export default function DashboardPage() {
                 const isActive = activeProject?.id === p.id;
 
                 return (
-                  <button
+                  <article
                     key={p.id}
-                    onClick={() => setActive(p)}
-                    className={`group rounded-xl border p-4 text-left transition-all hover:shadow-md ${
+                    className={`group relative rounded-xl border p-4 transition-all hover:shadow-md ${
                       isActive
                         ? 'border-blue-400 bg-blue-50 shadow-sm'
                         : 'border-gray-200 bg-white hover:border-blue-200'
                     }`}
                   >
-                    <div className='flex items-start justify-between'>
-                      <div className='flex items-center gap-2'>
-                        <span
-                          className='h-3 w-3 rounded-full flex-shrink-0'
-                          style={{ backgroundColor: p.color ?? '#6366f1' }}
-                        />
-                        <h3 className='font-semibold text-gray-900 truncate'>{p.name}</h3>
+                    <button
+                      type='button'
+                      onClick={() => setActive(p)}
+                      aria-label={`Select ${p.name} project`}
+                      aria-pressed={isActive}
+                      className='absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
+                    />
+                    <div className='relative'>
+                      <div className='flex min-w-0 items-start justify-between gap-2'>
+                        <div className='pointer-events-none flex min-w-0 items-center gap-2'>
+                          <span
+                            className='h-3 w-3 rounded-full flex-shrink-0'
+                            style={{ backgroundColor: p.color ?? '#6366f1' }}
+                          />
+                          <h3 className='truncate font-semibold text-gray-900'>{p.name}</h3>
+                        </div>
+                        {p.ownerId === user?.id && (
+                          <button
+                            type='button'
+                            onClick={() => setMemberProject(p)}
+                            aria-label={`Manage members for ${p.name}`}
+                            className='z-20 inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
+                          >
+                            <UserPlus size={14} aria-hidden='true' />
+                            <span>Manage</span>
+                          </button>
+                        )}
                       </div>
+
                       {isActive && (
-                        <span className='rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white'>
+                        <span className='pointer-events-none mt-1 inline-flex rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white'>
                           Active
                         </span>
                       )}
-                    </div>
 
-                    {p.description && (
-                      <p className='mt-1.5 text-xs text-gray-500 line-clamp-2'>{p.description}</p>
-                    )}
+                      {p.description && (
+                        <p className='pointer-events-none mt-1.5 line-clamp-2 text-xs text-gray-500'>{p.description}</p>
+                      )}
 
-                    <div className='mt-3 flex items-center gap-3 text-xs text-gray-500'>
-                      <span className='flex items-center gap-1'>
-                        <CheckSquare size={12} /> {pTasks.length} tasks
-                      </span>
-                      <span className='flex items-center gap-1'>
-                        <Users size={12} /> {p._count?.members ?? 'â€“'} members
-                      </span>
-                    </div>
-
-                    {pTasks.length > 0 && (
-                      <div className='mt-3'>
-                        <div className='flex items-center justify-between mb-1'>
-                          <span className='text-[10px] text-gray-400'>Progress</span>
-                          <span className='text-[10px] font-semibold text-gray-600'>{progress}%</span>
-                        </div>
-                        <div className='h-1.5 w-full rounded-full bg-gray-100'>
-                          <div
-                            className='h-1.5 rounded-full bg-blue-500 transition-all'
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
+                      <div className='pointer-events-none mt-3 flex items-center gap-3 text-xs text-gray-500'>
+                        <span className='flex items-center gap-1'>
+                          <CheckSquare size={12} /> {pTasks.length} tasks
+                        </span>
+                        <span className='flex items-center gap-1'>
+                          <Users size={12} /> {p._count?.members ?? 'â€“'} members
+                        </span>
                       </div>
-                    )}
-                  </button>
+
+                      {pTasks.length > 0 && (
+                        <div className='pointer-events-none mt-3'>
+                          <div className='mb-1 flex items-center justify-between'>
+                            <span className='text-[10px] text-gray-400'>Progress</span>
+                            <span className='text-[10px] font-semibold text-gray-600'>{progress}%</span>
+                          </div>
+                          <div className='h-1.5 w-full rounded-full bg-gray-100'>
+                            <div
+                              className='h-1.5 rounded-full bg-blue-500 transition-all'
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </article>
                 );
               })}
             </div>
@@ -218,6 +241,13 @@ export default function DashboardPage() {
 
       {/* Modals */}
       <CreateProjectModal open={showNewProject} onClose={() => setShowNewProject(false)} />
+      {memberProject && (
+        <ProjectMembersDialog
+          project={memberProject}
+          isAdmin={isAdmin}
+          onClose={() => setMemberProject(null)}
+        />
+      )}
 
       {viewTask && (
         <>
@@ -236,4 +266,3 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
-

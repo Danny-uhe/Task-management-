@@ -13,6 +13,7 @@ import {
   updateProject,
   deleteProject,
   getProjectMembers,
+  getEligibleProjectMembers,
   addProjectMember,
 } from "./project.service.js";
 
@@ -147,6 +148,31 @@ export async function getAll(req: Request, res: Response) {
       });
     } catch (error) {
       return res.status(404).json({
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong",
+      });
+    }
+  }
+
+  export async function getEligibleMembers(
+    req: Request,
+    res: Response
+  ) {
+    try {
+      const members = await getEligibleProjectMembers(
+        req.params.id as string,
+        req.user!.userId
+      );
+
+      return res.json({
+        success: true,
+        members,
+      });
+    } catch (error) {
+      return res.status(403).json({
         success: false,
         message:
           error instanceof Error

@@ -25,9 +25,24 @@ export interface AcceptInviteResponse {
   refreshToken: string;
 }
 
+export interface CreateInvitationPayload {
+  email: string;
+  name: string;
+  systemRole: "admin" | "member";
+  projectId: string;
+  role: "owner" | "admin" | "member";
+}
+
 // ── Public invitation API calls ───────────────────────────────────────────────
 
 export const invitationService = {
+  create(payload: CreateInvitationPayload) {
+    return api.post<{ success: boolean; invitation: InvitationDetails }>(
+      "/invitations",
+      payload
+    );
+  },
+
   getByToken(token: string) {
     return api.get<{ success: boolean; invitation: InvitationDetails }>(
       `/invitations/${token}`

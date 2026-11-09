@@ -7,30 +7,40 @@ interface ProjectState {
   activeProject: ApiProject | null;
   loading: boolean;
   fetchProjects: () => Promise<void>;
+  refreshProjects: () => Promise<void>;
   setActiveProject: (p: ApiProject | null) => void;
   addProject: (p: ApiProject) => void;
 }
 
-export const useProjectStore = create<ProjectState>((set) => ({
+export const useProjectStore = create<ProjectState>((set, get) => ({
   projects: [],
   activeProject: null,
   loading: false,
 
   fetchProjects: async () => {
+    try {
+      await get().refreshProjects();
+    } catch {
+      // Initial dashboard loading retains its existing non-blocking behavior.
+    }
+  },
+
+  refreshProjects: async () => {
     set({ loading: true });
     try {
       const res = await projectService.getProjects();
       const projects = res.data.projects;
-      set((s) => ({
-        projects,
-        // Keep activeProject in sync or default to first
-        activeProject:
-          s.activeProject
-            ? projects.find((p) => p.id === s.activeProject!.id) ?? projects[0] ?? null
+      set((state) => {
+        const activeProject = state.activeProject;
+
+        return {
+          projects,
+          // Keep activeProject in sync or default to first
+          activeProject: activeProject
+            ? projects.find((p) => p.id === activeProject.id) ?? projects[0] ?? null
             : projects[0] ?? null,
-      }));
-    } catch {
-      // silently fail — TaskContext already shows a toast
+        };
+      });
     } finally {
       set({ loading: false });
     }

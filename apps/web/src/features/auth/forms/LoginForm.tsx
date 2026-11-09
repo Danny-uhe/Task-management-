@@ -1,6 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { isAxiosError } from 'axios';
 import toast from 'react-hot-toast';
 
 import { Button, Input, PasswordInput } from '@/shared/components/ui';
@@ -9,6 +10,24 @@ import RememberMe    from '../components/RemenberMe';
 
 import { authService } from '../services/auth.services';
 import { useAuthStore } from '@/store/authStore';
+
+function getLoginErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const responseMessage = (
+      error as { response?: { data?: { message?: unknown } } }
+    ).response?.data?.message;
+
+    if (typeof responseMessage === 'string' && responseMessage.trim()) {
+      return responseMessage.trim();
+    }
+  }
+
+  if (isAxiosError(error) && !error.response) {
+    return "We couldn't reach TaskSync. Check your connection and try again.";
+  }
+
+  return "We couldn't sign you in. Please try again.";
+}
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -39,10 +58,7 @@ export default function LoginForm() {
       toast.success(`Welcome back, ${user.name}!`);
       navigate('/dashboard');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })
-          ?.response?.data?.message ?? 'Invalid email or password';
-      toast.error(message);
+      toast.error(getLoginErrorMessage(err));
     }
   };
 

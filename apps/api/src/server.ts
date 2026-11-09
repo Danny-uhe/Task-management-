@@ -36,24 +36,39 @@ async function seedAdmin() {
     const hashed = await bcrypt.hash(password, 12);
 
     const existing = await prisma.user.findUnique({ where: { email } });
+    const admin = existing
+      ? existing.systemRole === "admin"
+        ? existing
+        : await prisma.user.update({
+            where: { email },
+            data: { systemRole: "admin", isActive: true, password: hashed },
+          })
+      : await prisma.user.create({
+          data: { name, email, password: hashed, systemRole: "admin", isActive: true },
+        });
 
-    if (existing) {
-      if (existing.systemRole === "admin") {
-        console.log("[Admin] Admin user already exists ✅");
-        return;
-      }
-      await prisma.user.update({
-        where: { email },
-        data:  { systemRole: "admin", isActive: true, password: hashed },
-      });
-      console.log(`[Admin] Existing user promoted to admin: ${email}`);
-      return;
-    }
-
-    await prisma.user.create({
-      data: { name, email, password: hashed, systemRole: "admin", isActive: true },
+    await prisma.organizationMember.upsert({
+      where: {
+        organizationId_userId: {
+          organizationId: "org_default",
+          userId: admin.id,
+        },
+      },
+      update: { role: "admin" },
+      create: {
+        organizationId: "org_default",
+        userId: admin.id,
+        role: "admin",
+      },
     });
-    console.log(`[Admin] Admin created: ${email}`);
+
+    console.log(
+      existing
+        ? existing.systemRole === "admin"
+          ? "[Admin] Admin user and organization membership verified ✅"
+          : `[Admin] Existing user promoted to admin: ${email}`
+        : `[Admin] Admin created: ${email}`
+    );
   } catch (err) {
     console.error("[Admin] Failed to seed admin:", (err as Error).message);
     // Non-fatal — server still starts

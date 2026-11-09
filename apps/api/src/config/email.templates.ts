@@ -85,6 +85,17 @@ function expiryNote(text: string): string {
   </p>`;
 }
 
+function escapeHtml(value: string): string {
+  const entities: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
+  return value.replace(/[&<>"']/g, (character) => entities[character]);
+}
+
 // ─── Template 1 — Invite ───────────────────────────────────────────────────
 
 export interface InviteEmailData {
@@ -222,5 +233,47 @@ export function buildWelcomeEmail(data: WelcomeEmailData) {
     subject: `Welcome to ${data.orgName} on TaskSync`,
     html,
     text,
+  };
+}
+
+export interface NewMessageEmailData {
+  recipientName: string;
+  senderName: string;
+  projectName: string;
+  replyUrl: string;
+}
+
+export function buildNewMessageEmail(data: NewMessageEmailData) {
+  const recipientName = escapeHtml(data.recipientName);
+  const senderName = escapeHtml(data.senderName);
+  const projectName = escapeHtml(data.projectName);
+  const replyUrl = escapeHtml(data.replyUrl);
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0f172a;">
+      You have a new message
+    </h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.6;">
+      Hi <strong style="color:#0f172a;">${recipientName}</strong>,
+      <strong style="color:#0f172a;">${senderName}</strong> sent you a message
+      in <strong style="color:#2563eb;">${projectName}</strong>.
+    </p>
+    <p style="margin:0;font-size:15px;color:#475569;">
+      Sign in to TaskSync to read the message and reply.
+    </p>
+    ${ctaButton(replyUrl, "Open conversation")}
+    ${fallbackLink(replyUrl)}
+  `;
+
+  return {
+    subject: `${data.senderName} sent you a TaskSync message`,
+    html: baseLayout("You have a new TaskSync message", body),
+    text: [
+      `Hi ${data.recipientName},`,
+      ``,
+      `${data.senderName} sent you a message in ${data.projectName}.`,
+      `Sign in to TaskSync to read the message and reply:`,
+      data.replyUrl,
+    ].join("\n"),
   };
 }

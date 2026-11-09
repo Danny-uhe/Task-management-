@@ -14,6 +14,15 @@ export interface ApiProject {
   };
 }
 
+export interface ProjectMemberCandidate {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string | null;
+  position?: string | null;
+  isOnline: boolean;
+}
+
 export const projectService = {
   /** Get all projects the current user is a member of */
   getProjects() {
@@ -25,6 +34,21 @@ export const projectService = {
     return api.get<{ success: boolean; project: ApiProject }>(
       `/projects/${projectId}`
     );
+  },
+
+  /** Get active organization users who can be added to this project */
+  getEligibleProjectMembers(projectId: string) {
+    return api.get<{ success: boolean; members: ProjectMemberCandidate[] }>(
+      `/projects/${projectId}/eligible-members`
+    );
+  },
+
+  /** Add an organization user to a project */
+  addProjectMember(projectId: string, userId: string) {
+    return api.post(`/projects/${projectId}/members`, {
+      userId,
+      role: "member",
+    });
   },
 
   /** Create a project (admin only) */

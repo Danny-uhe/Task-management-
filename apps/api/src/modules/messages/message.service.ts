@@ -1,6 +1,7 @@
 import { prisma } from "../../config/prisma.js";
 import { getIO } from "../../sockets/socket.js";
 import { CreateMessageInput } from "./message.validation.js";
+import { notifyProjectMessage } from "../notifications/notification.service.js";
 
 const MESSAGE_PAGE_SIZE = 50;
 
@@ -68,8 +69,15 @@ export async function createMessage(
         io.to(`user:${memberId}`).emit("new_message", message);
       }
     });
-  } catch { /* socket not ready */ }
+  } catch (error) {
+    console.error("[Message] Failed to broadcast message:", error);
+  }
 
+  try {
+    await notifyProjectMessage(message);
+  } catch (error) {
+    console.error("[MessageNotification] Failed to notify project members:", error);
+  }
 
   return message;
 }

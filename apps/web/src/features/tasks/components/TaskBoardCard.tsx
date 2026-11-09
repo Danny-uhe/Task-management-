@@ -7,6 +7,7 @@ import {
   Pencil,
   Trash2,
   ArrowRight,
+  CheckCircle2,
 } from 'lucide-react';
 import type { Task, TaskStatus } from '../types/types';
 import { STATUS_LABELS } from '../types/types';
@@ -19,10 +20,11 @@ type Props = {
   onEdit?: (task: Task) => void;
 };
 
-const OTHER_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'in_review', 'done'];
+const ALL_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'in_review', 'done'];
 
 export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
-  const { moveTask, deleteTask } = useTaskContext();
+  const { moveTask, deleteTask, canApprove } = useTaskContext();
+  const isApprover = canApprove(task.projectId);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +76,11 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
     onEdit?.(task);
   }
 
+  // Statuses this user can move to (non-admins can't move to "done")
+  const movableStatuses = ALL_STATUSES.filter(
+    (s) => s !== task.status && (s !== 'done' || isApprover),
+  );
+
   return (
     <div
       ref={setNodeRef}
@@ -101,7 +108,7 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
 
           {/* Dropdown */}
           {menuOpen && (
-            <div className='absolute right-0 top-6 z-50 w-44 rounded-xl border border-gray-100 bg-white py-1 shadow-lg'>
+            <div className='absolute right-0 top-6 z-50 w-48 rounded-xl border border-gray-100 bg-white py-1 shadow-lg'>
               {/* Edit */}
               {onEdit && (
                 <button
@@ -115,17 +122,38 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
               )}
 
               {/* Move to */}
-              {OTHER_STATUSES.filter((s) => s !== task.status).map((s) => (
+              {movableStatuses.map((s) => (
                 <button
                   key={s}
                   type='button'
                   onClick={(e) => handleMoveTo(e, s)}
-                  className='flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50'
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 ${
+                    s === 'done' ? 'text-green-600' : 'text-slate-700'
+                  }`}
                 >
-                  <ArrowRight size={14} />
-                  Move to {STATUS_LABELS[s]}
+                  {s === 'done' ? <CheckCircle2 size={14} /> : <ArrowRight size={14} />}
+                  {s === 'done' ? 'Approve (Mark Done)' : `Move to ${STATUS_LABELS[s]}`}
                 </button>
               ))}
+
+              {/* Hint for non-admins when task is in_review */}
+              {!isApprover && task.status === 'in_review' && (
+                <p className='px-3 py-2 text-xs text-amber-600'>
+                  Waiting for admin approval
+                </p>
+              )}
+
+              {/* Hint to submit for review */}
+              {!isApprover && task.status !== 'in_review' && task.status !== 'done' && (
+                <button
+                  type='button'
+                  onClick={(e) => handleMoveTo(e, 'in_review')}
+                  className='flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50'
+                >
+                  <CheckCircle2 size={14} />
+                  Submit for review
+                </button>
+              )}
 
               <div className='my-1 border-t border-gray-100' />
 

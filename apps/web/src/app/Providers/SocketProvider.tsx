@@ -69,9 +69,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     // ── Live notifications ──────────────────────────────────────────────────
     socket.on("notification", (notif: SocketNotification) => {
       addNotification({
-        type: "general",
-        title: notif.type.replace(/_/g, " "),
+        type: notif.type.includes("message") ? "message" : "general",
+        title: notif.type === "new_message"
+          ? "New message"
+          : notif.type.replace(/_/g, " "),
         message: notif.message,
+        dbId: notif.id,
+        relatedId: notif.relatedId,
       });
       toast(notif.message, { icon: "🔔" });
     });

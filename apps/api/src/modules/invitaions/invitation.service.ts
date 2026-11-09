@@ -7,6 +7,7 @@ import {
   queueInviteEmail,
   queueWelcomeEmail,
 } from "../../queues/email.queue.js";
+import { getOwnedProjectOrganizationScope } from "../projects/project.service.js";
 
 const ORG_ID = "org_default";
 
@@ -21,18 +22,22 @@ export async function createInvitation(
   projectId?: string,
   projectRole: string = "member"
 ) {
+  const organizationId = projectId
+    ? (await getOwnedProjectOrganizationScope(projectId, invitedById)).organizationId
+    : ORG_ID;
+
   // Block if already a registered member
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     const isMember = await prisma.organizationMember.findFirst({
-      where: { userId: existingUser.id, organizationId: ORG_ID },
+      where: { userId: existingUser.id, organizationId },
     });
     if (isMember) throw new Error("This user is already a member of the organisation.");
   }
 
   // Block duplicate pending invites
   const pending = await prisma.invitation.findFirst({
-    where: { email, organizationId: ORG_ID, status: "PENDING" },
+    where: { email, organizationId, status: "PENDING" },
   });
   if (pending) throw new Error("A pending invitation already exists for this email. Cancel it first or use resend.");
 
@@ -42,7 +47,7 @@ export async function createInvitation(
   const invitation = await prisma.invitation.create({
     data: {
       email, name,
-      organizationId: ORG_ID,
+      organizationId,
       invitedById,
       systemRole, role: projectRole,
       projectId,
@@ -57,7 +62,7 @@ export async function createInvitation(
   });
 
   const org = await prisma.organization.findUnique({
-    where: { id: ORG_ID },
+    where: { id: organizationId },
     select: { name: true },
   });
 
@@ -170,7 +175,7 @@ export async function acceptInvitation(token: string, password: string) {
 
   // 6. Queue welcome email in background
   const org = await prisma.organization.findUnique({
-    where: { id: ORG_ID },
+    where: { id: invitation.organizationId },
     select: { name: true },
   });
 
@@ -253,7 +258,7 @@ export async function resendInvitation(invitationId: string) {
   });
 
   const org = await prisma.organization.findUnique({
-    where: { id: ORG_ID },
+    where: { id: invite.organizationId },
     select: { name: true },
   });
 

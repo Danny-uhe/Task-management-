@@ -6,7 +6,8 @@ import { redisConnection, isRedisReady } from "../config/redis.js";
 export type EmailJobName =
   | "send-invite"
   | "send-password-reset"
-  | "send-welcome";
+  | "send-welcome"
+  | "send-new-message";
 
 export type EmailJobData =
   | {
@@ -29,6 +30,14 @@ export type EmailJobData =
       to: string;
       userName: string;
       orgName: string;
+    }
+  | {
+      type: "send-new-message";
+      to: string;
+      recipientName: string;
+      senderName: string;
+      projectName: string;
+      replyUrl: string;
     };
 
 // ── Queue instance ─────────────────────────────────────────────────────────
@@ -90,4 +99,24 @@ export async function queueWelcomeEmail(data: {
     return;
   }
   await emailQueue.add("send-welcome", { type: "send-welcome", ...data });
+}
+
+export async function queueNewMessageEmail(data: {
+  to: string;
+  recipientName: string;
+  senderName: string;
+  projectName: string;
+  replyUrl: string;
+}) {
+  if (!isRedisReady()) {
+    console.warn(
+      "[EmailQueue] Redis unavailable — new-message email skipped for user:",
+      data.to
+    );
+    return;
+  }
+  await emailQueue.add("send-new-message", {
+    type: "send-new-message",
+    ...data,
+  });
 }

@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { prisma } from "../../config/prisma.js";
+import { notifyProjectMessage } from "../../modules/notifications/notification.service.js";
 
 interface SendMessagePayload {
   projectId: string;
@@ -45,7 +46,14 @@ export function registerMessageHandlers(io: Server, socket: Socket) {
           io.to(`user:${memberId}`).emit("new_message", message);
         }
       });
-    } catch { /* Non-fatal */ }
+    } catch (error) {
+      console.error("[Socket] Failed to broadcast message to project members:", error);
+    }
+
+    try {
+      await notifyProjectMessage(message, io);
+    } catch (error) {
+      console.error("[MessageNotification] Failed to notify project members:", error);
+    }
   });
 }
-

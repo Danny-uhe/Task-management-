@@ -12,10 +12,11 @@ import {
 
 const router = Router();
 
+router.get("/members", authenticate, getOrgMembers);
+
 router.use(authenticate, requireAdmin);
 
 router.get("/stats",                       getOrgStats);
-router.get("/members",                     getOrgMembers);
 router.post("/invite",                     inviteMember);
 router.delete("/members/:userId",          removeUser);
 router.patch("/members/:userId/activate",  activateUser);

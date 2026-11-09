@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Mail, CheckCircle2, ClipboardList,
   Zap, Flame, Trophy, MessageCircle, Loader2,
@@ -45,6 +45,7 @@ function getInitials(name: string) {
 export default function UserProfilePage() {
   const { id }      = useParams<{ id: string }>();
   const navigate    = useNavigate();
+  const [searchParams] = useSearchParams();
   const currentUser = useAuthStore((s) => s.user);
 
   const [profile,  setProfile]  = useState<UserProfile | null>(null);
@@ -59,10 +60,11 @@ export default function UserProfilePage() {
       .then((res) => {
         const found = res.data.members.find((m) => m.id === id) ?? null;
         setProfile(found);
+        if (found && searchParams.get('message') === '1') setMsgOpen(true);
       })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, searchParams]);
 
   if (loading) {
     return (

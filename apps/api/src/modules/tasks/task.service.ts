@@ -265,6 +265,24 @@ export async function updateTask(
     throw new Error("You are not a member of this project");
   }
 
+  // Only project admins/owners can approve a task (move to "done")
+  if (data.status === "done" && task.status !== "done") {
+    const caller = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { systemRole: true },
+    });
+    const canApprove =
+      caller?.systemRole === "admin" ||
+      member.role === "owner" ||
+      member.role === "admin";
+
+    if (!canApprove) {
+      throw new Error(
+        "Only project admins or owners can approve tasks. Submit for review and ask your admin to approve."
+      );
+    }
+  }
+
   if (data.assignedToId) {
     // Only system admins and project owners/admins can assign tasks
     const caller = await prisma.user.findUnique({

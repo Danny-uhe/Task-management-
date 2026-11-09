@@ -3,6 +3,7 @@ import { redisConnection } from "../config/redis.js";
 import { transporter } from "../config/mailer.js";
 import {
   buildInviteEmail,
+  buildNewMessageEmail,
   buildPasswordResetEmail,
   buildWelcomeEmail,
 } from "../config/email.templates.js";
@@ -95,6 +96,26 @@ export function startEmailWorker() {
           });
 
           console.log(`[EmailWorker] ✅ Welcome email sent to ${data.to}`);
+          break;
+        }
+
+        case "send-new-message": {
+          const email = buildNewMessageEmail({
+            recipientName: data.recipientName,
+            senderName: data.senderName,
+            projectName: data.projectName,
+            replyUrl: data.replyUrl,
+          });
+
+          await transporter.sendMail({
+            from: env.SMTP_FROM,
+            to: data.to,
+            subject: email.subject,
+            html: email.html,
+            text: email.text,
+          });
+
+          console.log(`[EmailWorker] ✅ New-message email sent to ${data.to}`);
           break;
         }
 

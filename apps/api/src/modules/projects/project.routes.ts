@@ -8,6 +8,7 @@ import {
     update,
     remove,
     getMembers,
+    getEligibleMembers,
     addMember,
   } from "./project.controller.js";
 const router = Router();
@@ -16,6 +17,7 @@ const router = Router();
 // Create project — admin only
 router.post('/', authenticate, requireAdmin, create);
 router.post('/:id/members', authenticate, addMember);
+router.get('/:id/eligible-members', authenticate, getEligibleMembers);
 
 
 // Get all task router

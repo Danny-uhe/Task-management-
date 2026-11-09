@@ -32,9 +32,9 @@ export async function getOrgStats(_req: Request, res: Response) {
   }
 }
 
-export async function getOrgMembers(_req: Request, res: Response) {
+export async function getOrgMembers(req: Request, res: Response) {
   try {
-    const members = await getOrgMembersService();
+    const members = await getOrgMembersService(req.user!.userId);
     return res.json({
       success: true,
       members,
@@ -103,4 +103,3 @@ export async function changeUserRole(req: Request, res: Response) {
     return res.status(400).json({ success: false, message: error instanceof Error ? error.message : "Something went wrong" });
   }
 }
-

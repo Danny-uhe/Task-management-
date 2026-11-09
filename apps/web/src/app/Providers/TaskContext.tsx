@@ -58,6 +58,8 @@ type TaskContextType = {
   updateTask:   (t: Task) => Promise<void>;
   deleteTask:   (projectId: string, id: string) => Promise<void>;
   moveTask:     (id: string, newStatus: TaskStatus) => void;
+  /** True if the current user can approve tasks (move to Done) in a given project */
+  canApprove:   (projectId: string) => boolean;
   addTaskOpen:      boolean;
   openAddTask:      () => void;
   closeAddTask:     () => void;
@@ -73,8 +75,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [addTaskOpen,    setAddTaskOpen]    = useState(false);
   const [boardDetailTask, setBoardDetailTask] = useState<Task | null>(null);
 
+  // Map of projectId → user's role in that project
+  const [projectRoles, setProjectRoles]   = useState<Record<string, string>>({});
+
   const { addPoints }       = useUserProfile();
   const { addNotification } = useNotifications();
+  const user                = useAuthStore((s) => s.user);
   const accessToken         = useAuthStore((s) => s.accessToken);
 
   // Track project IDs so we can load tasks for all projects
@@ -99,12 +105,27 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         )
       );
       setTasks(taskArrays.flat().map(mapApiTask));
+
+      // Build role map: project owner = "owner", otherwise fetch member list
+      // Simple heuristic: system admin → can approve everywhere
+      // For project-level, we derive from the ownerId in the project response
+      const roles: Record<string, string> = {};
+      for (const p of projects) {
+        if (user?.systemRole === 'admin') {
+          roles[p.id] = 'admin';
+        } else if (p.ownerId === user?.id) {
+          roles[p.id] = 'owner';
+        } else {
+          roles[p.id] = 'member';
+        }
+      }
+      setProjectRoles(roles);
     } catch {
       toast.error('Failed to load tasks');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -114,6 +135,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
     fetchTasks();
   }, [fetchTasks, accessToken]);
+
+  // ── Can the current user approve (move to done) in this project? ─────────
+  const canApprove = useCallback((projectId: string): boolean => {
+    if (user?.systemRole === 'admin') return true;
+    const role = projectRoles[projectId];
+    return role === 'owner' || role === 'admin';
+  }, [user, projectRoles]);
 
   // ── Add task ─────────────────────────────────────────────────────────────
   const addTask = useCallback(async (
@@ -151,8 +179,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addPoints(POINTS.TASK_COMPLETE, `"${saved.title}" completed`);
         addNotification({
           type:           'completed',
-          title:          'Task Completed! 🎉',
-          message:        `You earned ${POINTS.TASK_COMPLETE} points for completing "${saved.title}"`,
+          title:          'Task Approved! 🎉',
+          message:        `"${saved.title}" has been marked as Done`,
           avatarColor:    'bg-green-500',
           avatarInitials: '✓',
         });
@@ -173,13 +201,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const task = prev.find((t) => t.id === id);
       if (!task) return prev;
 
+      // Block non-admins from moving to "done"
+      if (newStatus === 'done' && !canApprove(task.projectId)) {
+        toast.error('Only project admins can approve tasks. Move to In Review instead.');
+        return prev;
+      }
+
       // Award points if transitioning to done
       if (task.status !== 'done' && newStatus === 'done') {
         addPoints(POINTS.TASK_COMPLETE, `"${task.title}" completed`);
         addNotification({
           type:           'completed',
-          title:          'Task Completed! 🎉',
-          message:        `You earned ${POINTS.TASK_COMPLETE} points for completing "${task.title}"`,
+          title:          'Task Approved! 🎉',
+          message:        `"${task.title}" has been marked as Done`,
           avatarColor:    'bg-green-500',
           avatarInitials: '✓',
         });
@@ -189,15 +223,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const updated = { ...task, status: newStatus, progress: newStatus === 'done' ? 100 : task.progress };
       taskService
         .updateTask(task.projectId, id, { status: newStatus })
-        .catch(() => {
+        .catch((err) => {
           // Rollback on failure
           setTasks((t) => t.map((x) => (x.id === id ? task : x)));
-          toast.error('Failed to move task');
+          const msg = err?.response?.data?.message ?? 'Failed to move task';
+          toast.error(msg);
         });
 
       return prev.map((t) => (t.id === id ? updated : t));
     });
-  }, [addPoints, addNotification]);
+  }, [addPoints, addNotification, canApprove]);
 
   return (
     <TaskContext.Provider
@@ -209,6 +244,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         updateTask,
         deleteTask,
         moveTask,
+        canApprove,
         addTaskOpen,
         openAddTask:  () => setAddTaskOpen(true),
         closeAddTask: () => setAddTaskOpen(false),

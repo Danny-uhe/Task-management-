@@ -22,8 +22,55 @@ const filterChips = [
   { label: 'High Priority', color: 'bg-red-100 text-red-600' },
 ];
 
+/** Overall progress bar across all tasks */
+function ProgressSummary({ tasks }: { tasks: Task[] }) {
+  if (tasks.length === 0) return null;
+  const done       = tasks.filter((t) => t.status === 'done').length;
+  const inReview   = tasks.filter((t) => t.status === 'in_review').length;
+  const inProgress = tasks.filter((t) => t.status === 'in_progress').length;
+  const pct        = Math.round((done / tasks.length) * 100);
+
+  return (
+    <div className='rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm'>
+      <div className='mb-2 flex items-center justify-between text-sm'>
+        <span className='font-semibold text-slate-700'>Overall Progress</span>
+        <span className='font-bold text-blue-600'>{pct}%</span>
+      </div>
+      {/* Progress bar */}
+      <div className='h-2.5 w-full overflow-hidden rounded-full bg-gray-100'>
+        <div
+          className='h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500'
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {/* Breakdown pills */}
+      <div className='mt-3 flex flex-wrap gap-3 text-xs'>
+        <span className='flex items-center gap-1 text-slate-500'>
+          <span className='inline-block h-2 w-2 rounded-full bg-slate-300' />
+          To Do: <strong>{tasks.length - done - inReview - inProgress}</strong>
+        </span>
+        <span className='flex items-center gap-1 text-blue-600'>
+          <span className='inline-block h-2 w-2 rounded-full bg-blue-400' />
+          In Progress: <strong>{inProgress}</strong>
+        </span>
+        <span className='flex items-center gap-1 text-amber-600'>
+          <span className='inline-block h-2 w-2 rounded-full bg-amber-400' />
+          In Review: <strong>{inReview}</strong>
+        </span>
+        <span className='flex items-center gap-1 text-green-600'>
+          <span className='inline-block h-2 w-2 rounded-full bg-green-400' />
+          Done: <strong>{done}</strong>
+        </span>
+        <span className='ml-auto text-slate-400'>
+          {done} of {tasks.length} tasks complete
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function TasksPage() {
-  const { tasks, moveTask, setBoardDetailTask, boardDetailTask } =
+  const { tasks, moveTask, canApprove, setBoardDetailTask, boardDetailTask } =
     useTaskContext();
 
   /* ── View ── */
@@ -56,6 +103,11 @@ export default function TasksPage() {
     if (!over) return;
     const id   = String(active.id);
     const dest = over.id as TaskStatus;
+    const task = tasks.find((t) => t.id === id);
+
+    // Guard: non-admins cannot drag to "done"
+    if (dest === 'done' && task && !canApprove(task.projectId)) return;
+
     if (['todo', 'in_progress', 'in_review', 'done'].includes(dest)) {
       moveTask(id, dest);
     }
@@ -87,6 +139,9 @@ export default function TasksPage() {
             setSelectedTaskId(null); // close detail panel when searching
           }}
         />
+
+        {/* Progress summary bar */}
+        <ProgressSummary tasks={tasks} />
 
         {/* ══════════ LIST VIEW ══════════ */}
         {view === 'list' && (
@@ -229,7 +284,8 @@ export default function TasksPage() {
                 ))}
               </TaskColumn>
 
-              <TaskColumn id='done' title='Done'>
+              {/* Done column — visually marked as "approval required" for non-admins */}
+              <TaskColumn id='done' title='Done ✓'>
                 {done.map((task) => (
                   <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} onEdit={(t) => { setBoardDetailTask(null); setEditTaskId(t.id); }} />
                 ))}

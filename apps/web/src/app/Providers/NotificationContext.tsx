@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 
 export type AppNotification = {
   id: number;
-  type: 'assignment' | 'invite' | 'mention' | 'completed' | 'general';
+  type: 'assignment' | 'invite' | 'mention' | 'completed' | 'message' | 'general';
   title: string;
   message: string;
   time: string;
@@ -13,6 +13,7 @@ export type AppNotification = {
   avatarColor?: string;
   avatarInitials?: string;
   dbId?: string; // real DB id
+  relatedId?: string | null;
 };
 
 type NotifCtx = {
@@ -29,6 +30,7 @@ const NotificationContext = createContext<NotifCtx | null>(null);
 let nextId = 1000;
 
 function typeFromString(t: string): AppNotification['type'] {
+  if (t.includes('message')) return 'message';
   if (t.includes('assign')) return 'assignment';
   if (t.includes('invite')) return 'invite';
   if (t.includes('mention')) return 'mention';
@@ -55,11 +57,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!accessToken) { setNotifications([]); return; }
     api.get<{ success: boolean; notifications: Array<{
       id: string; type: string; message: string; isRead: boolean; createdAt: string;
+      relatedId: string | null;
     }> }>('/notifications')
       .then((res) => {
         const mapped = (res.data.notifications ?? []).map((n) => ({
           id: nextId++,
           dbId: n.id,
+          relatedId: n.relatedId,
           type: typeFromString(n.type),
           title: n.type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
           message: n.message,

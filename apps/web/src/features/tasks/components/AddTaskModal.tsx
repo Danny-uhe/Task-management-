@@ -80,25 +80,24 @@ export default function AddTaskModal() {
     }).catch(() => toast.error('Could not load projects'));
   }, [addTaskOpen]);
 
-  /* When projectId changes, load ALL org users as potential assignees */
+  /* Only project members can be assigned to tasks in that project. */
   useEffect(() => {
-    if (!projectId) { setMembers([]); return; }
+    if (!addTaskOpen || !projectId) {
+      setMembers([]);
+      setAssignedToId('');
+      return;
+    }
+
+    setAssignedToId('');
     api.get<{ success: boolean; members: { user: Member }[] }>(
       `/projects/${projectId}/members`
     ).then((res) => {
-      const projMembers = res.data.members.map((m) => m.user);
-      // Also fetch all org users so newly invited people appear
-      return api.get<{ success: boolean; users: Member[] }>('/users')
-        .then((usersRes) => {
-          const allUsers = usersRes.data.users ?? [];
-          // Merge: project members first, then any org users not already listed
-          const projIds = new Set(projMembers.map((m) => m.id));
-          const extras = allUsers.filter((u) => !projIds.has(u.id));
-          setMembers([...projMembers, ...extras]);
-        })
-        .catch(() => setMembers(projMembers)); // fallback to project members only
-    }).catch(() => setMembers([]));
-  }, [projectId]);
+      setMembers(res.data.members.map((m) => m.user));
+    }).catch(() => {
+      setMembers([]);
+      toast.error('Could not load project members');
+    });
+  }, [addTaskOpen, projectId]);
 
 
   if (!addTaskOpen) return null;

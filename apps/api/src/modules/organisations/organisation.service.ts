@@ -28,8 +28,23 @@ export async function getOrganisationStats() {
 /**
  * List all users with their project count, tasks count, and points.
  */
-export async function getOrgMembers() {
+export async function getOrgMembers(requesterId: string) {
+  const memberships = await prisma.organizationMember.findMany({
+    where: { userId: requesterId },
+    select: { organizationId: true },
+  });
+  const organizationIds = memberships.map(({ organizationId }) => organizationId);
+
+  if (organizationIds.length === 0) {
+    throw new Error("You must belong to an organization to view its members.");
+  }
+
   const users = await prisma.user.findMany({
+    where: {
+      organizationMembers: {
+        some: { organizationId: { in: organizationIds } },
+      },
+    },
     select: {
       id: true,
       name: true,
@@ -166,4 +181,3 @@ export async function changeUserRole(
     select: { id: true, name: true, email: true, systemRole: true, isActive: true },
   });
 }
-
