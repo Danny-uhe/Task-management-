@@ -213,25 +213,25 @@ export default function TasksPage() {
             <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4'>
               <TaskColumn id='todo' title='To Do'>
                 {todo.map((task) => (
-                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} onEdit={(t) => { setBoardDetailTask(null); setEditTaskId(t.id); }} />
                 ))}
               </TaskColumn>
 
               <TaskColumn id='in_progress' title='In Progress'>
                 {inProgress.map((task) => (
-                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} onEdit={(t) => { setBoardDetailTask(null); setEditTaskId(t.id); }} />
                 ))}
               </TaskColumn>
 
               <TaskColumn id='in_review' title='In Review'>
                 {inReview.map((task) => (
-                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} onEdit={(t) => { setBoardDetailTask(null); setEditTaskId(t.id); }} />
                 ))}
               </TaskColumn>
 
               <TaskColumn id='done' title='Done'>
                 {done.map((task) => (
-                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} />
+                  <TaskBoardCard key={task.id} task={task} onClick={(t) => setBoardDetailTask(t)} onEdit={(t) => { setBoardDetailTask(null); setEditTaskId(t.id); }} />
                 ))}
               </TaskColumn>
             </div>
