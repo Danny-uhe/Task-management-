@@ -53,8 +53,6 @@ router.get(
   getAll
 );
 
-
-
 // Get a specific task by ID
 router.get(
   "/tasks/:taskId",
@@ -62,35 +60,42 @@ router.get(
   getOne
 );
 
-
 router.get(
   "/tasks/:taskId/attachments",
   authenticate,
   getAttachments
 );
 
-//Update task
+// Update task — project-scoped route (used by frontend) + bare route
+router.patch(
+  "/projects/:projectId/tasks/:taskId",
+  authenticate,
+  update
+);
 router.patch(
   "/tasks/:taskId",
   authenticate,
   update
 );
 
-//Delete task
+// Delete task — project-scoped route (used by frontend) + bare route
+router.delete(
+  "/projects/:projectId/tasks/:taskId",
+  authenticate,
+  remove
+);
 router.delete(
   "/tasks/:taskId",
   authenticate,
   remove
 );
 
-
-//Upload task attachment
+// Upload task attachment
 router.post(
   "/tasks/:taskId/attachments",
   authenticate,
   multerUpload,
   upload
 );
-
 
 export default router;
