@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+/* ── Dark & Sleek global defaults ───────────────────────────────────────── */
+:root {
+  --accent: #22d3ee;        /* cyan-400 */
+  --accent-dark: #0891b2;   /* cyan-600 */
+}
+
+body {
+  background-color: #f1f5f9; /* slate-100 — main content area */
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
