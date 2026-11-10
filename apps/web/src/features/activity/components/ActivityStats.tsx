@@ -1,30 +1,20 @@
-import { CheckCircle2, Clock3, Trophy } from 'lucide-react';
+import { CheckCircle2, ListChecks, Trophy } from 'lucide-react';
+import type { ActivityResponse } from '../services/activity.service';
 
-const stats = [
-  {
-    title: 'Completed Today',
-    value: '12',
-    icon: CheckCircle2,
-    color: 'bg-green-100 text-green-600',
-  },
-  {
-    title: 'Hours Worked',
-    value: '6.5',
-    icon: Clock3,
-    color: 'bg-blue-100 text-blue-600',
-  },
-  {
-    title: 'Points Earned',
-    value: '250',
-    icon: Trophy,
-    color: 'bg-yellow-100 text-yellow-600',
-  },
-];
+export default function ActivityStats({
+  stats,
+}: {
+  stats: ActivityResponse['stats'] | null;
+}) {
+  const items = [
+    { title: 'Completed Today', value: stats?.completedToday, icon: CheckCircle2, color: 'bg-green-100 text-green-600' },
+    { title: 'Tasks Updated Today', value: stats?.updatedToday, icon: ListChecks, color: 'bg-blue-100 text-blue-600' },
+    { title: 'Total Points', value: stats?.points, icon: Trophy, color: 'bg-yellow-100 text-yellow-600' },
+  ];
 
-export default function ActivityStats() {
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6'>
-      {stats.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         return (
           <div
@@ -34,7 +24,9 @@ export default function ActivityStats() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-gray-500'>{item.title}</p>
-                <h2 className='mt-2 text-3xl font-bold'>{item.value}</h2>
+                <h2 className='mt-2 text-3xl font-bold'>
+                  {item.value === undefined ? '—' : item.value.toLocaleString()}
+                </h2>
               </div>
               <div
                 className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.color} sm:h-12 sm:w-12`}

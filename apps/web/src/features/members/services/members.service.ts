@@ -45,12 +45,12 @@ export const membersService = {
 
   // Change a user's systemRole to admin
   makeAdmin(userId: string) {
-    return api.patch(`/users/${userId}/role`, { systemRole: "admin" });
+    return api.patch(`/organisation/members/${userId}/role`, { systemRole: "admin" });
   },
 
   // Change a user's systemRole to member
   makeMember(userId: string) {
-    return api.patch(`/users/${userId}/role`, { systemRole: "member" });
+    return api.patch(`/organisation/members/${userId}/role`, { systemRole: "member" });
   },
 
   // Deactivate (soft-delete) a user
@@ -80,4 +80,3 @@ export const membersService = {
     return api.post(`/invitations/${inviteId}/resend`);
   },
 };
-

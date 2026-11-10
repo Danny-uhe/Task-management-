@@ -25,7 +25,7 @@ interface OrgMember {
   isOnline: boolean;
 }
 
-const COLORS = ['bg-blue-500','bg-purple-500','bg-green-500','bg-orange-500','bg-pink-500','bg-teal-500'];
+const COLORS = ['bg-cyan-500','bg-purple-500','bg-green-500','bg-orange-500','bg-pink-500','bg-teal-500'];
 function avatarColor(id: string) {
   const s = id.split('').reduce((a,c) => a + c.charCodeAt(0), 0);
   return COLORS[s % COLORS.length];
@@ -98,7 +98,7 @@ export default function OrganisationPage() {
     m.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const inp = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+  const inp = 'w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20';
 
   return (
     <AppLayout>
@@ -107,13 +107,13 @@ export default function OrganisationPage() {
         {/* Header */}
         <div className='flex items-center justify-between'>
           <div>
-            <h1 className='text-xl font-bold text-slate-900 sm:text-2xl'>Organisation</h1>
-            <p className='mt-0.5 text-sm text-slate-400'>Manage members and organisation settings</p>
+            <h1 className='text-xl font-bold text-white sm:text-2xl'>Organisation</h1>
+            <p className='mt-0.5 text-sm text-zinc-400'>Manage members and organisation settings</p>
           </div>
           {isAdmin && (
             <button
               onClick={() => setShowInvite(true)}
-              className='flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700'
+              className='flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-600'
             >
               <Send size={15} />
               Invite Member
@@ -123,45 +123,45 @@ export default function OrganisationPage() {
 
         {/* Stats */}
         {loading ? (
-          <div className='flex justify-center py-10'><Loader2 size={24} className='animate-spin text-blue-500' /></div>
+          <div className='flex justify-center py-10'><Loader2 size={24} className='animate-spin text-cyan-500' /></div>
         ) : (
           <>
             <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
               {[
-                { icon: Users,       label: 'Members',     value: stats?.totalUsers ?? 0,       color: 'text-blue-600',   bg: 'bg-blue-50'   },
-                { icon: FolderOpen,  label: 'Projects',    value: stats?.totalProjects ?? 0,    color: 'text-purple-600', bg: 'bg-purple-50' },
-                { icon: CheckSquare, label: 'Tasks Done',  value: stats?.completedTasks ?? 0,   color: 'text-green-600',  bg: 'bg-green-50'  },
-                { icon: TrendingUp,  label: 'Completion',  value: `${stats?.completionRate ?? 0}%`, color: 'text-orange-600', bg: 'bg-orange-50' },
+                { icon: Users,       label: 'Members',     value: stats?.totalUsers ?? 0,           color: 'text-cyan-400',   bg: 'bg-cyan-500/10'   },
+                { icon: FolderOpen,  label: 'Projects',    value: stats?.totalProjects ?? 0,         color: 'text-purple-400', bg: 'bg-purple-500/10' },
+                { icon: CheckSquare, label: 'Tasks Done',  value: stats?.completedTasks ?? 0,        color: 'text-green-400',  bg: 'bg-green-500/10'  },
+                { icon: TrendingUp,  label: 'Completion',  value: `${stats?.completionRate ?? 0}%`,  color: 'text-amber-400',  bg: 'bg-amber-500/10'  },
               ].map(({ icon: Icon, label, value, color, bg }) => (
-                <div key={label} className='rounded-2xl border border-slate-200 bg-white p-5 shadow-sm'>
+                <div key={label} className='rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-sm'>
                   <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${bg}`}>
                     <Icon size={20} className={color} />
                   </div>
                   <p className={`text-2xl font-bold ${color}`}>{value}</p>
-                  <p className='mt-0.5 text-sm text-slate-500'>{label}</p>
+                  <p className='mt-0.5 text-sm text-zinc-400'>{label}</p>
                 </div>
               ))}
             </div>
 
             {/* Members list */}
-            <div className='rounded-2xl border border-slate-200 bg-white shadow-sm'>
-              <div className='border-b border-slate-100 px-6 py-4'>
+            <div className='rounded-2xl border border-zinc-700 bg-zinc-900 shadow-sm'>
+              <div className='border-b border-zinc-700 px-6 py-4'>
                 <div className='flex items-center gap-3'>
                   <div className='relative flex-1'>
-                    <Search size={14} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
+                    <Search size={14} className='absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500' />
                     <input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder='Search members…'
-                      className='w-full rounded-xl border border-slate-200 py-2 pl-9 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                      className='w-full rounded-xl border border-zinc-700 bg-zinc-800 py-2 pl-9 pr-4 text-sm text-white placeholder-zinc-500 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20'
                     />
                   </div>
                 </div>
               </div>
 
-              <div className='divide-y divide-slate-100'>
+              <div className='divide-y divide-zinc-700'>
                 {filtered.length === 0 ? (
-                  <div className='flex flex-col items-center py-12 text-slate-400'>
+                  <div className='flex flex-col items-center py-12 text-zinc-500'>
                     <Users size={32} className='mb-3 opacity-30' />
                     <p className='text-sm font-medium'>No members found</p>
                   </div>
@@ -173,25 +173,25 @@ export default function OrganisationPage() {
                         <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${avatarColor(m.id)}`}>
                           {getInitials(m.name)}
                         </div>
-                        <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${m.isOnline ? 'bg-green-400' : 'bg-slate-300'}`} />
+                        <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-zinc-900 ${m.isOnline ? 'bg-green-400' : 'bg-zinc-600'}`} />
                       </div>
 
                       {/* Info */}
                       <div className='min-w-0 flex-1'>
                         <div className='flex items-center gap-2'>
-                          <p className='truncate text-sm font-semibold text-slate-900'>
+                          <p className='truncate text-sm font-semibold text-white'>
                             {m.name}
                             {m.id === currentUser?.id && (
-                              <span className='ml-1.5 text-xs font-normal text-slate-400'>(You)</span>
+                              <span className='ml-1.5 text-xs font-normal text-zinc-500'>(You)</span>
                             )}
                           </p>
                           {m.systemRole === 'admin' && (
-                            <span className='flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold text-yellow-700'>
+                            <span className='flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400'>
                               <Crown size={9} /> Admin
                             </span>
                           )}
                         </div>
-                        <div className='mt-0.5 flex items-center gap-1 text-xs text-slate-400'>
+                        <div className='mt-0.5 flex items-center gap-1 text-xs text-zinc-500'>
                           <Mail size={11} />
                           <span className='truncate'>{m.email}</span>
                         </div>
@@ -199,13 +199,13 @@ export default function OrganisationPage() {
 
                       {/* Points */}
                       <div className='hidden text-right sm:block'>
-                        <p className='text-sm font-bold text-purple-600'>{m.points.toLocaleString()}</p>
-                        <p className='text-xs text-slate-400'>points</p>
+                        <p className='text-sm font-bold text-purple-400'>{m.points.toLocaleString()}</p>
+                        <p className='text-xs text-zinc-500'>points</p>
                       </div>
 
                       {/* Status */}
                       <span className={`hidden rounded-full px-2.5 py-1 text-xs font-medium sm:inline-flex ${
-                        m.isActive ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'
+                        m.isActive ? 'bg-green-500/10 text-green-400' : 'bg-zinc-700 text-zinc-400'
                       }`}>
                         {m.isActive ? 'Active' : 'Inactive'}
                       </span>
@@ -214,7 +214,7 @@ export default function OrganisationPage() {
                       {isAdmin && m.id !== currentUser?.id && (
                         <button
                           onClick={() => handleRemove(m.id, m.name)}
-                          className='rounded-lg p-2 text-slate-300 hover:bg-red-50 hover:text-red-500'
+                          className='rounded-lg p-2 text-zinc-600 hover:bg-red-500/10 hover:text-red-400'
                           title='Remove member'
                         >
                           <Trash2 size={15} />
@@ -231,34 +231,34 @@ export default function OrganisationPage() {
 
       {/* Invite Modal */}
       {showInvite && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-          <div className='w-full max-w-md rounded-2xl bg-white shadow-2xl'>
-            <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4'>
+          <div className='w-full max-w-md rounded-2xl bg-zinc-900 shadow-2xl'>
+            <div className='flex items-center justify-between border-b border-zinc-700 px-6 py-4'>
               <div>
-                <h2 className='text-base font-bold text-slate-900'>Invite Team Member</h2>
-                <p className='text-xs text-slate-400'>An email with a sign-up link will be sent</p>
+                <h2 className='text-base font-bold text-white'>Invite Team Member</h2>
+                <p className='text-xs text-zinc-400'>An email with a sign-up link will be sent</p>
               </div>
-              <button onClick={() => setShowInvite(false)} className='rounded-lg p-1 text-slate-400 hover:bg-slate-100'>
+              <button onClick={() => setShowInvite(false)} className='rounded-lg p-1 text-zinc-500 hover:bg-zinc-700'>
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleInvite} className='space-y-4 px-6 py-5'>
               <div>
-                <label className='mb-1.5 block text-sm font-medium text-slate-700'>Full Name</label>
+                <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Full Name</label>
                 <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder='Danny' className={inp} required />
               </div>
               <div>
-                <label className='mb-1.5 block text-sm font-medium text-slate-700'>Email address</label>
+                <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Email address</label>
                 <input type='email' value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder='danny@example.com' className={inp} required />
               </div>
               <div>
-                <label className='mb-1.5 block text-sm font-medium text-slate-700'>Role</label>
+                <label className='mb-1.5 block text-sm font-medium text-zinc-300'>Role</label>
                 <div className='grid grid-cols-2 gap-2'>
                   {(['member','admin'] as const).map((r) => (
                     <button key={r} type='button' onClick={() => setInviteRole(r)}
                       className={`rounded-xl border-2 py-2.5 text-sm font-medium transition-all ${
-                        inviteRole === r ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        inviteRole === r ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400' : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'
                       }`}>
                       {r === 'admin' ? 'Admin — full access' : 'Member — can view & work on tasks'}
                     </button>
@@ -267,7 +267,7 @@ export default function OrganisationPage() {
               </div>
 
               <button type='submit' disabled={inviting || !inviteEmail.trim() || !inviteName.trim()}
-                className='flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50'>
+                className='flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 py-3 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-50'>
                 {inviting ? <Loader2 size={15} className='animate-spin' /> : <Send size={15} />}
                 Send Invite
               </button>

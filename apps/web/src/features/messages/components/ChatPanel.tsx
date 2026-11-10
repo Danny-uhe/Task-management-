@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Trash2, MessageCircle, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useMessages, useSendMessage, useDeleteMessage, useTypingUsers } from "@/hooks/useMessages";
 import { useSocket } from "@/app/Providers/SocketProvider";
 import { useAuthStore } from "@/store/authStore";
@@ -89,9 +90,13 @@ export default function ChatPanel({ projectId, projectName }: Props) {
             return (
               <div key={msg.id} className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""}`}>
                 {/* Avatar */}
-                <div className={`h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold text-white ${avatarColor(msg.userId)}`}>
+                <Link
+                  to={`/profile/${msg.userId}`}
+                  aria-label={`View ${msg.user?.name ?? "user"}'s profile`}
+                  className={`h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${avatarColor(msg.userId)}`}
+                >
                   {getInitials(msg.user?.name ?? "?")}
-                </div>
+                </Link>
 
                 <div className={`group max-w-[70%] ${isOwn ? "items-end" : "items-start"} flex flex-col gap-1`}>
                   <p className={`text-[11px] text-gray-400 ${isOwn ? "text-right" : ""}`}>

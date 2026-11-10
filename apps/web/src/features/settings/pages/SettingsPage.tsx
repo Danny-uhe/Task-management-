@@ -157,8 +157,8 @@ export default function SettingsPage() {
     }
   };
 
-  const inp = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
-  const lbl = 'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400';
+  const inp = 'w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20';
+  const lbl = 'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500';
 
   /* ── Toggle helper ── */
   const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
@@ -166,7 +166,7 @@ export default function SettingsPage() {
       role='switch'
       aria-checked={checked}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-blue-500' : 'bg-slate-200'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-cyan-500' : 'bg-zinc-600'}`}
     >
       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
     </button>
@@ -178,8 +178,8 @@ export default function SettingsPage() {
 
         {/* ── Page title ── */}
         <div>
-          <h1 className='text-xl font-bold text-slate-900 sm:text-2xl'>Settings</h1>
-          <p className='mt-0.5 text-sm text-slate-400'>Manage your account and preferences</p>
+          <h1 className='text-xl font-bold text-white sm:text-2xl'>Settings</h1>
+          <p className='mt-0.5 text-sm text-zinc-400'>Manage your account and preferences</p>
         </div>
 
         <div className='flex flex-col gap-6 lg:flex-row'>
@@ -192,8 +192,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab(id)}
                 className={`flex items-center gap-2.5 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === id
-                    ? 'bg-blue-500 text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-cyan-500 text-white'
+                    : 'text-zinc-400 hover:bg-zinc-800'
                 }`}
               >
                 <Icon size={16} />
@@ -209,57 +209,57 @@ export default function SettingsPage() {
             {activeTab === 'profile' && (
               <>
                 {/* Stats banner */}
-                <section className='rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-5 text-white shadow-sm'>
-                  <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-blue-200'>Your Progress</p>
+                <section className='rounded-2xl bg-gradient-to-br from-cyan-600 to-cyan-800 p-5 text-white shadow-sm'>
+                  <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-cyan-200'>Your Progress</p>
                   <div className='grid grid-cols-3 gap-3'>
                     <div className='flex flex-col items-center gap-1 rounded-xl bg-white/15 py-3'>
                       <Zap size={18} className='text-yellow-300' fill='currentColor' />
                       <p className='text-lg font-bold'>{points.toLocaleString()}</p>
-                      <p className='text-[10px] text-blue-200'>Points</p>
+                      <p className='text-[10px] text-cyan-200'>Points</p>
                     </div>
                     <div className='flex flex-col items-center gap-1 rounded-xl bg-white/15 py-3'>
                       <Flame size={18} className='text-orange-300' />
                       <p className='text-lg font-bold'>{streak}</p>
-                      <p className='text-[10px] text-blue-200'>Day Streak</p>
+                      <p className='text-[10px] text-cyan-200'>Day Streak</p>
                     </div>
                     <div className='flex flex-col items-center gap-1 rounded-xl bg-white/15 py-3'>
                       <Trophy size={18} className='text-yellow-300' />
                       <p className='text-lg font-bold'>#{rank}</p>
-                      <p className='text-[10px] text-blue-200'>Rank</p>
+                      <p className='text-[10px] text-cyan-200'>Rank</p>
                     </div>
                   </div>
                 </section>
 
                 {/* Avatar + basic info */}
-                <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-                  <h2 className='mb-5 text-base font-bold text-slate-900'>Basic Info</h2>
+                <section className='rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-sm'>
+                  <h2 className='mb-5 text-base font-bold text-white'>Basic Info</h2>
 
                   <div className='mb-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start'>
                     <div className='relative'>
                       <img
                         src={avatarUrl}
                         alt='Profile avatar'
-                        className='h-20 w-20 rounded-full object-cover ring-4 ring-blue-100'
+                        className='h-20 w-20 rounded-full object-cover ring-4 ring-cyan-500/30'
                       />
                       <button
                         type='button'
                         onClick={openAvatarPicker}
-                        className='absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow-md hover:bg-blue-700'
+                        className='absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md hover:bg-cyan-600'
                       >
                         <Camera size={13} />
                       </button>
                     </div>
                     <div className='text-center sm:text-left'>
-                      <p className='font-semibold text-slate-800'>{localName}</p>
-                      <p className='text-sm text-slate-400'>{localRole}</p>
+                      <p className='font-semibold text-white'>{localName}</p>
+                      <p className='text-sm text-zinc-400'>{localRole}</p>
                       <button
                         type='button'
                         onClick={openAvatarPicker}
-                        className='mt-2 text-xs font-medium text-blue-500 hover:underline'
+                        className='mt-2 text-xs font-medium text-cyan-400 hover:underline'
                       >
                         Change profile photo
                       </button>
-                      <p className='mt-0.5 text-xs text-slate-400'>JPG, GIF or PNG — max 2 MB</p>
+                      <p className='mt-0.5 text-xs text-zinc-500'>JPG, GIF or PNG — max 2 MB</p>
                     </div>
                   </div>
 
@@ -288,8 +288,8 @@ export default function SettingsPage() {
             {/* ════ ACCOUNT TAB ════ */}
             {activeTab === 'account' && (
               <>
-                <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-                  <h2 className='mb-5 text-base font-bold text-slate-900'>Change Password</h2>
+                <section className='rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-sm'>
+                  <h2 className='mb-5 text-base font-bold text-white'>Change Password</h2>
                   <div className='space-y-4'>
                     {[
                       { label: 'Current Password', val: currentPw, set: setCurrentPw, show: showCurrent, toggle: () => setShowCurrent(!showCurrent) },
@@ -306,30 +306,30 @@ export default function SettingsPage() {
                             placeholder='••••••••'
                             className={`${inp} pr-10`}
                           />
-                          <button type='button' onClick={toggle} className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600'>
+                          <button type='button' onClick={toggle} className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300'>
                             {show ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
                         </div>
                       </div>
                     ))}
-                    {pwError && <p className='text-sm font-medium text-red-500'>{pwError}</p>}
+                    {pwError && <p className='text-sm font-medium text-red-400'>{pwError}</p>}
                   </div>
                 </section>
 
-                <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-                  <h2 className='mb-2 text-base font-bold text-slate-900'>Connected Accounts</h2>
-                  <p className='mb-4 text-sm text-slate-400'>Link external accounts for easier login</p>
+                <section className='rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-sm'>
+                  <h2 className='mb-2 text-base font-bold text-white'>Connected Accounts</h2>
+                  <p className='mb-4 text-sm text-zinc-400'>Link external accounts for easier login</p>
                   {[
                     { name: 'Google',   icon: '🟢', connected: false },
                     { name: 'GitHub',   icon: '⚫', connected: false },
                     { name: 'Slack',    icon: '🟣', connected: false },
                   ].map((acc) => (
-                    <div key={acc.name} className='flex items-center justify-between border-b border-slate-100 py-3 last:border-0'>
+                    <div key={acc.name} className='flex items-center justify-between border-b border-zinc-700 py-3 last:border-0'>
                       <div className='flex items-center gap-3'>
                         <span className='text-xl'>{acc.icon}</span>
-                        <span className='text-sm font-medium text-slate-700'>{acc.name}</span>
+                        <span className='text-sm font-medium text-zinc-300'>{acc.name}</span>
                       </div>
-                      <button className='rounded-lg border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50'>
+                      <button className='rounded-lg border border-zinc-700 px-4 py-1.5 text-xs font-semibold text-zinc-400 hover:bg-zinc-800'>
                         {acc.connected ? 'Disconnect' : 'Connect'}
                       </button>
                     </div>
@@ -337,13 +337,13 @@ export default function SettingsPage() {
                 </section>
 
                 {/* Danger Zone */}
-                <section className='rounded-2xl border border-red-200 bg-red-50 p-6'>
+                <section className='rounded-2xl border border-red-500/20 bg-red-500/5 p-6'>
                   <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='flex items-start gap-3'>
-                      <AlertTriangle size={20} className='mt-0.5 flex-shrink-0 text-red-500' />
+                      <AlertTriangle size={20} className='mt-0.5 flex-shrink-0 text-red-400' />
                       <div>
-                        <h2 className='font-bold text-red-700'>Danger Zone</h2>
-                        <p className='mt-0.5 text-sm text-red-500'>
+                        <h2 className='font-bold text-red-400'>Danger Zone</h2>
+                        <p className='mt-0.5 text-sm text-red-400/70'>
                           Permanently delete your account and all associated data.
                         </p>
                       </div>
@@ -362,8 +362,8 @@ export default function SettingsPage() {
 
             {/* ════ NOTIFICATIONS TAB ════ */}
             {activeTab === 'notifications' && (
-              <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-                <h2 className='mb-5 text-base font-bold text-slate-900'>Notification Preferences</h2>
+              <section className='rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-sm'>
+                <h2 className='mb-5 text-base font-bold text-white'>Notification Preferences</h2>
                 <div className='space-y-4'>
                   {(Object.keys(notifPrefs) as (keyof typeof notifPrefs)[]).map((key) => {
                     const labels: Record<keyof typeof notifPrefs, { title: string; desc: string }> = {
@@ -376,10 +376,10 @@ export default function SettingsPage() {
                     };
                     const { title, desc } = labels[key];
                     return (
-                      <div key={key} className='flex items-center justify-between gap-4 rounded-xl border border-slate-100 px-4 py-3'>
+                      <div key={key} className='flex items-center justify-between gap-4 rounded-xl border border-zinc-700 px-4 py-3'>
                         <div>
-                          <p className='text-sm font-semibold text-slate-800'>{title}</p>
-                          <p className='text-xs text-slate-400'>{desc}</p>
+                          <p className='text-sm font-semibold text-zinc-200'>{title}</p>
+                          <p className='text-xs text-zinc-500'>{desc}</p>
                         </div>
                         <Toggle
                           checked={notifPrefs[key]}
@@ -395,32 +395,32 @@ export default function SettingsPage() {
             {/* ════ APPEARANCE TAB ════ */}
             {activeTab === 'appearance' && (
               <>
-                <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-                  <h2 className='mb-5 text-base font-bold text-slate-900'>Theme</h2>
+                <section className='rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-sm'>
+                  <h2 className='mb-5 text-base font-bold text-white'>Theme</h2>
                   <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
                     {[
-                      { label: 'Light',  preview: 'bg-white border-2 border-blue-500'  },
-                      { label: 'Dark',   preview: 'bg-slate-900'                       },
-                      { label: 'System', preview: 'bg-gradient-to-r from-white to-slate-900' },
+                      { label: 'Light',  preview: 'bg-white border-2 border-cyan-500'  },
+                      { label: 'Dark',   preview: 'bg-zinc-900 border-2 border-cyan-500' },
+                      { label: 'System', preview: 'bg-gradient-to-r from-white to-zinc-900' },
                     ].map((theme) => (
                       <button
                         key={theme.label}
                         onClick={() => setDarkMode(theme.label === 'Dark')}
                         className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
                           (darkMode ? 'Dark' : 'Light') === theme.label
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-slate-200 hover:border-slate-300'
+                            ? 'border-cyan-500 bg-cyan-500/10'
+                            : 'border-zinc-700 hover:border-zinc-600'
                         }`}
                       >
                         <div className={`h-8 w-full rounded-lg ${theme.preview}`} />
-                        <span className='text-xs font-semibold text-slate-600'>{theme.label}</span>
+                        <span className='text-xs font-semibold text-zinc-400'>{theme.label}</span>
                       </button>
                     ))}
                   </div>
                 </section>
 
-                <section className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'>
-                  <h2 className='mb-5 text-base font-bold text-slate-900'>Regional</h2>
+                <section className='rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-sm'>
+                  <h2 className='mb-5 text-base font-bold text-white'>Regional</h2>
                   <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                     <div>
                       <label className={lbl}><Globe size={12} className='mr-1 inline' />Language</label>
@@ -450,7 +450,7 @@ export default function SettingsPage() {
                   onClick={handleSave}
                   disabled={saving}
                   className={`rounded-xl px-8 py-3 text-sm font-semibold text-white transition-colors ${
-                    saved ? 'bg-green-500' : 'bg-blue-500 hover:bg-blue-700'
+                    saved ? 'bg-green-500' : 'bg-cyan-500 hover:bg-cyan-600'
                   } ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Changes'}

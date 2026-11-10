@@ -18,8 +18,8 @@ type FilterTab = 'Today' | 'Upcoming' | 'Completed' | 'Assigned';
 
 /* Active filter chips shown above the list */
 const filterChips = [
-  { label: 'In Progress', color: 'bg-blue-100 text-blue-700' },
-  { label: 'High Priority', color: 'bg-red-100 text-red-600' },
+  { label: 'In Progress', color: 'bg-cyan-500/10 text-cyan-400' },
+  { label: 'High Priority', color: 'bg-red-500/10 text-red-400' },
 ];
 
 /** Overall progress bar across all tasks */
@@ -31,37 +31,37 @@ function ProgressSummary({ tasks }: { tasks: Task[] }) {
   const pct        = Math.round((done / tasks.length) * 100);
 
   return (
-    <div className='rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm'>
+    <div className='rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 shadow-sm'>
       <div className='mb-2 flex items-center justify-between text-sm'>
-        <span className='font-semibold text-slate-700'>Overall Progress</span>
-        <span className='font-bold text-blue-600'>{pct}%</span>
+        <span className='font-semibold text-zinc-300'>Overall Progress</span>
+        <span className='font-bold text-cyan-400'>{pct}%</span>
       </div>
       {/* Progress bar */}
-      <div className='h-2.5 w-full overflow-hidden rounded-full bg-gray-100'>
+      <div className='h-2.5 w-full overflow-hidden rounded-full bg-zinc-700'>
         <div
-          className='h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500'
+          className='h-full rounded-full bg-gradient-to-r from-cyan-500 to-green-500 transition-all duration-500'
           style={{ width: `${pct}%` }}
         />
       </div>
       {/* Breakdown pills */}
       <div className='mt-3 flex flex-wrap gap-3 text-xs'>
-        <span className='flex items-center gap-1 text-slate-500'>
-          <span className='inline-block h-2 w-2 rounded-full bg-slate-300' />
+        <span className='flex items-center gap-1 text-zinc-500'>
+          <span className='inline-block h-2 w-2 rounded-full bg-zinc-600' />
           To Do: <strong>{tasks.length - done - inReview - inProgress}</strong>
         </span>
-        <span className='flex items-center gap-1 text-blue-600'>
-          <span className='inline-block h-2 w-2 rounded-full bg-blue-400' />
+        <span className='flex items-center gap-1 text-cyan-400'>
+          <span className='inline-block h-2 w-2 rounded-full bg-cyan-400' />
           In Progress: <strong>{inProgress}</strong>
         </span>
-        <span className='flex items-center gap-1 text-amber-600'>
+        <span className='flex items-center gap-1 text-amber-400'>
           <span className='inline-block h-2 w-2 rounded-full bg-amber-400' />
           In Review: <strong>{inReview}</strong>
         </span>
-        <span className='flex items-center gap-1 text-green-600'>
+        <span className='flex items-center gap-1 text-green-400'>
           <span className='inline-block h-2 w-2 rounded-full bg-green-400' />
           Done: <strong>{done}</strong>
         </span>
-        <span className='ml-auto text-slate-400'>
+        <span className='ml-auto text-zinc-500'>
           {done} of {tasks.length} tasks complete
         </span>
       </div>
@@ -159,8 +159,8 @@ export default function TasksPage() {
                     }}
                     className={`relative flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                       activeFilter === tab
-                        ? 'bg-blue-500 text-white'
-                        : 'text-slate-500 hover:bg-slate-100'
+                        ? 'bg-cyan-500 text-white'
+                        : 'text-zinc-500 hover:bg-zinc-800'
                     }`}
                   >
                     {tab}
@@ -187,7 +187,7 @@ export default function TasksPage() {
                     {chip.label}
                   </span>
                 ))}
-                <button className='ml-1 rounded-full p-1 text-slate-400 hover:bg-slate-100'>
+                <button className='ml-1 rounded-full p-1 text-zinc-500 hover:bg-zinc-800'>
                   ✕
                 </button>
               </div>
@@ -204,7 +204,7 @@ export default function TasksPage() {
               {/* Task list */}
               <div className='space-y-3'>
                 {visibleTasks.length === 0 ? (
-                  <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 py-16 text-slate-400'>
+                  <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 py-16 text-zinc-500'>
                     <p className='text-sm font-medium'>No tasks in this category</p>
                   </div>
                 ) : (
@@ -234,7 +234,7 @@ export default function TasksPage() {
                     />
                   </div>
 
-                  <div className='fixed inset-0 z-40 flex flex-col bg-white md:hidden'>
+                  <div className='fixed inset-0 z-40 flex flex-col bg-zinc-950 md:hidden'>
                     <div className='flex-1 overflow-y-auto'>
                       <TaskDetailPanel
                         task={selectedTask}
@@ -254,12 +254,12 @@ export default function TasksPage() {
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             {/* Board-level empty state when search has no matches */}
             {search && todo.length === 0 && inProgress.length === 0 && inReview.length === 0 && done.length === 0 ? (
-              <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 py-20 text-slate-400'>
-                <p className='font-semibold text-slate-600'>No tasks match "{search}"</p>
+              <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 py-20 text-zinc-500'>
+                <p className='font-semibold text-zinc-400'>No tasks match "{search}"</p>
                 <p className='mt-1 text-sm'>Try a different keyword or</p>
                 <button
                   onClick={() => setSearch('')}
-                  className='mt-3 rounded-xl bg-blue-500 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700'
+                  className='mt-3 rounded-xl bg-cyan-500 px-5 py-2 text-sm font-semibold text-white hover:bg-cyan-600'
                 >
                   Clear search
                 </button>
@@ -306,10 +306,10 @@ export default function TasksPage() {
       {boardDetailTask && (
         <>
           <div
-            className='fixed inset-0 z-40 bg-black/40'
+            className='fixed inset-0 z-40 bg-black/60'
             onClick={() => setBoardDetailTask(null)}
           />
-          <div className='fixed right-0 top-0 z-50 flex h-screen w-full max-w-[420px] flex-col overflow-hidden bg-white shadow-2xl'>
+          <div className='fixed right-0 top-0 z-50 flex h-screen w-full max-w-[420px] flex-col overflow-hidden bg-zinc-900 shadow-2xl'>
             <TaskDetailPanel
               task={boardDetailTask}
               onClose={() => setBoardDetailTask(null)}

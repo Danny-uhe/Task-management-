@@ -3,6 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import {
   CalendarDays,
+  Archive,
   MoreVertical,
   Pencil,
   Trash2,
@@ -23,7 +24,7 @@ type Props = {
 const ALL_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'in_review', 'done'];
 
 export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
-  const { moveTask, deleteTask, canApprove } = useTaskContext();
+  const { moveTask, deleteTask, archiveTask, canApprove } = useTaskContext();
   const isApprover = canApprove(task.projectId);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -37,9 +38,9 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
   };
 
   const priorityColors: Record<string, string> = {
-    high:   'bg-red-100 text-red-600',
-    medium: 'bg-orange-100 text-orange-500',
-    low:    'bg-slate-100 text-slate-500',
+    high:   'bg-red-500/10 text-red-400',
+    medium: 'bg-amber-500/10 text-amber-400',
+    low:    'bg-zinc-700 text-zinc-400',
   };
 
   // Close menu when clicking outside
@@ -62,6 +63,14 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
         toast.error('Failed to delete task'),
       );
     }
+  }
+
+  function handleArchive(e: React.MouseEvent) {
+    e.stopPropagation();
+    setMenuOpen(false);
+    archiveTask(task.id)
+      .then(() => toast.success('Task archived'))
+      .catch((error) => toast.error(error?.response?.data?.message ?? 'Failed to archive task'));
   }
 
   function handleMoveTo(e: React.MouseEvent, status: TaskStatus) {
@@ -88,10 +97,10 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
       {...listeners}
       {...attributes}
       onClick={() => onClick(task)}
-      className='relative cursor-grab rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md active:cursor-grabbing'
+      className='relative cursor-grab rounded-xl border border-zinc-700 bg-zinc-800 p-4 shadow-sm transition hover:border-zinc-600 hover:shadow-md active:cursor-grabbing'
     >
       <div className='flex items-start justify-between gap-2'>
-        <h3 className='font-semibold text-slate-800'>{task.title}</h3>
+        <h3 className='font-semibold text-zinc-100'>{task.title}</h3>
 
         {/* Three-dot menu trigger */}
         <div ref={menuRef} className='relative shrink-0'>
@@ -101,20 +110,20 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
               e.stopPropagation();
               setMenuOpen((o) => !o);
             }}
-            className='rounded p-0.5 text-gray-400 hover:bg-slate-100 hover:text-slate-600'
+            className='rounded p-0.5 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
           >
             <MoreVertical size={16} />
           </button>
 
           {/* Dropdown */}
           {menuOpen && (
-            <div className='absolute right-0 top-6 z-50 w-48 rounded-xl border border-gray-100 bg-white py-1 shadow-lg'>
+            <div className='absolute right-0 top-6 z-50 w-48 rounded-xl border border-zinc-700 bg-zinc-800 py-1 shadow-lg'>
               {/* Edit */}
               {onEdit && (
                 <button
                   type='button'
                   onClick={handleEdit}
-                  className='flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50'
+                  className='flex w-full items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700'
                 >
                   <Pencil size={14} />
                   Edit task
@@ -127,8 +136,8 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
                   key={s}
                   type='button'
                   onClick={(e) => handleMoveTo(e, s)}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 ${
-                    s === 'done' ? 'text-green-600' : 'text-slate-700'
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-700 ${
+                    s === 'done' ? 'text-green-400' : 'text-zinc-300'
                   }`}
                 >
                   {s === 'done' ? <CheckCircle2 size={14} /> : <ArrowRight size={14} />}
@@ -138,7 +147,7 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
 
               {/* Hint for non-admins when task is in_review */}
               {!isApprover && task.status === 'in_review' && (
-                <p className='px-3 py-2 text-xs text-amber-600'>
+                <p className='px-3 py-2 text-xs text-amber-400'>
                   Waiting for admin approval
                 </p>
               )}
@@ -148,20 +157,31 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
                 <button
                   type='button'
                   onClick={(e) => handleMoveTo(e, 'in_review')}
-                  className='flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50'
+                  className='flex w-full items-center gap-2 border-t border-zinc-700 px-3 py-2 text-sm text-cyan-400 hover:bg-cyan-500/10'
                 >
                   <CheckCircle2 size={14} />
                   Submit for review
                 </button>
               )}
 
-              <div className='my-1 border-t border-gray-100' />
+              <div className='my-1 border-t border-zinc-700' />
+
+              {task.status === 'done' && (
+                <button
+                  type='button'
+                  onClick={handleArchive}
+                  className='flex w-full items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700'
+                >
+                  <Archive size={14} />
+                  Archive task
+                </button>
+              )}
 
               {/* Delete */}
               <button
                 type='button'
                 onClick={handleDelete}
-                className='flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50'
+                className='flex w-full items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10'
               >
                 <Trash2 size={14} />
                 Delete task
@@ -172,7 +192,7 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
       </div>
 
       {task.description && (
-        <p className='mt-1.5 line-clamp-2 text-xs text-slate-500'>
+        <p className='mt-1.5 line-clamp-2 text-xs text-zinc-500'>
           {task.description}
         </p>
       )}
@@ -184,7 +204,7 @@ export default function TaskBoardCard({ task, onClick, onEdit }: Props) {
           {task.priority}
         </span>
 
-        <div className='flex items-center gap-1 text-xs text-slate-400'>
+        <div className='flex items-center gap-1 text-xs text-zinc-500'>
           <CalendarDays size={13} />
           {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}
         </div>

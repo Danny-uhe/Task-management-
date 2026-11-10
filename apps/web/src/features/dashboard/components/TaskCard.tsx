@@ -11,9 +11,9 @@ type TaskCardProps = {
 };
 
 const priorityStyles: Record<string, string> = {
-  High:   'bg-red-100 text-red-600',
-  Medium: 'bg-orange-100 text-orange-500',
-  Low:    'bg-slate-100 text-slate-500',
+  High:   'bg-red-500/10 text-red-400',
+  Medium: 'bg-amber-500/10 text-amber-400',
+  Low:    'bg-zinc-700 text-zinc-400',
 };
 
 export default function TaskCard({ title, priority, time, onView, onEdit, onDelete }: TaskCardProps) {
@@ -33,22 +33,22 @@ export default function TaskCard({ title, priority, time, onView, onEdit, onDele
   }, []);
 
   const menuItems = [
-    { icon: Eye,         label: 'View task',   action: onView,   style: 'text-slate-700' },
-    { icon: Pencil,      label: 'Edit task',   action: onEdit,   style: 'text-slate-700' },
-    { icon: CheckCircle2,label: 'Mark as done',action: () => setDone(true), style: 'text-green-600' },
-    { icon: Trash2,      label: 'Delete',      action: onDelete, style: 'text-red-500'   },
+    { icon: Eye,          label: 'View task',    action: onView,              style: 'text-zinc-300' },
+    { icon: Pencil,       label: 'Edit task',    action: onEdit,              style: 'text-zinc-300' },
+    { icon: CheckCircle2, label: 'Mark as done', action: () => setDone(true), style: 'text-green-400' },
+    { icon: Trash2,       label: 'Delete',       action: onDelete,            style: 'text-red-400'  },
   ];
 
   return (
     <div className={`flex items-center justify-between rounded-xl border p-4 transition-all hover:shadow-sm ${
-      done ? 'border-slate-100 bg-slate-50 opacity-60' : 'border-gray-200 bg-white'
+      done ? 'border-zinc-700 bg-zinc-800 opacity-60' : 'border-zinc-700 bg-zinc-800'
     }`}>
       {/* Left: checkbox + text */}
       <div className='flex items-start gap-3'>
         <button
           onClick={() => setDone(!done)}
           className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-            done ? 'border-blue-500 bg-blue-500' : 'border-slate-300 bg-white'
+            done ? 'border-cyan-500 bg-cyan-500' : 'border-zinc-600 bg-zinc-700'
           }`}
         >
           {done && (
@@ -59,14 +59,14 @@ export default function TaskCard({ title, priority, time, onView, onEdit, onDele
         </button>
 
         <div>
-          <h3 className={`font-medium text-slate-800 ${done ? 'line-through text-slate-400' : ''}`}>
+          <h3 className={`font-medium ${done ? 'line-through text-zinc-500' : 'text-zinc-100'}`}>
             {title}
           </h3>
           <div className='mt-1.5 flex items-center gap-3'>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${priorityStyles[priority]}`}>
               {priority}
             </span>
-            <div className='flex items-center gap-1 text-xs text-slate-400'>
+            <div className='flex items-center gap-1 text-xs text-zinc-500'>
               <Clock size={12} />
               {time}
             </div>
@@ -78,13 +78,13 @@ export default function TaskCard({ title, priority, time, onView, onEdit, onDele
       <div className='relative' ref={menuRef}>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+          className='rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
         >
           <MoreVertical size={17} />
         </button>
 
         {menuOpen && (
-          <div className='absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-slate-100 bg-white py-1 shadow-xl'>
+          <div className='absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-zinc-700 bg-zinc-800 py-1 shadow-xl'>
             {menuItems.map(({ icon: Icon, label, action, style }) => (
               <button
                 key={label}
@@ -92,7 +92,7 @@ export default function TaskCard({ title, priority, time, onView, onEdit, onDele
                   setMenuOpen(false);
                   action?.();
                 }}
-                className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-50 ${style}`}
+                className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-zinc-700 ${style}`}
               >
                 <Icon size={15} />
                 {label}

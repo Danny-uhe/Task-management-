@@ -45,18 +45,18 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
 
   return (
     <>
-      <div className='flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white'>
+      <div className='flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900'>
 
         {/* ── Header ─────────────────────────────────── */}
-        <div className='flex items-start justify-between border-b border-slate-100 p-4 sm:p-5'>
-          <h2 className='pr-3 text-sm font-bold leading-snug text-slate-900 sm:text-base'>
+        <div className='flex items-start justify-between border-b border-zinc-700 p-4 sm:p-5'>
+          <h2 className='pr-3 text-sm font-bold leading-snug text-white sm:text-base'>
             {task.title}
           </h2>
           <div className='flex flex-shrink-0 items-center gap-1'>
             {onEdit && (
               <button
                 onClick={onEdit}
-                className='rounded-lg px-2.5 py-1 text-xs font-semibold text-blue-500 hover:bg-blue-50'
+                className='rounded-lg px-2.5 py-1 text-xs font-semibold text-cyan-400 hover:bg-cyan-500/10'
               >
                 Edit
               </button>
@@ -64,7 +64,7 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
             <button
               id='close-detail-panel-btn'
               onClick={onClose}
-              className='rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+              className='rounded-lg p-1 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
             >
               <X size={15} />
             </button>
@@ -72,43 +72,43 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
         </div>
 
         {/* ── Assignee + Due Date ─────────────────────── */}
-        <div className='grid grid-cols-2 gap-3 border-b border-slate-100 px-4 py-3 sm:px-5 sm:py-4'>
+        <div className='grid grid-cols-2 gap-3 border-b border-zinc-700 px-4 py-3 sm:px-5 sm:py-4'>
           <div>
-            <p className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400'>
+            <p className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-500'>
               Assignee
             </p>
             <div className='flex items-center gap-2'>
-              <div className='flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white'>
+              <div className='flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-[10px] font-bold text-white'>
                 {(task.assignedTo?.name ?? 'RI').slice(0, 2).toUpperCase()}
               </div>
-              <span className='text-sm font-medium text-slate-700'>
+              <span className='text-sm font-medium text-zinc-300'>
                 {task.assignedTo?.name ?? 'Rowland'}
               </span>
             </div>
           </div>
 
           <div>
-            <p className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400'>
+            <p className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-500'>
               Due Date
             </p>
-            <p className='text-sm font-medium text-slate-700'>{task.dueDate}</p>
+            <p className='text-sm font-medium text-zinc-300'>{task.dueDate}</p>
           </div>
         </div>
 
         {/* ── Description ──────────────────────────────── */}
-        <div className='border-b border-slate-100 px-4 py-3 sm:px-5 sm:py-4'>
+        <div className='border-b border-zinc-700 px-4 py-3 sm:px-5 sm:py-4'>
           <div className='mb-2 flex items-center gap-2'>
-            <FileText size={13} className='text-slate-400' />
-            <p className='text-xs font-semibold text-slate-700'>Description</p>
+            <FileText size={13} className='text-zinc-500' />
+            <p className='text-xs font-semibold text-zinc-300'>Description</p>
           </div>
-          <p className='rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs leading-relaxed text-slate-500 sm:text-sm'>
+          <p className='rounded-xl border border-zinc-700 bg-zinc-800 p-3 text-xs leading-relaxed text-zinc-400 sm:text-sm'>
             {task.description ??
               'Modernize the task experience with focus on visual clarity and user momentum.'}
           </p>
         </div>
 
         {/* ── Tabs ─────────────────────────────────────── */}
-        <div className='flex border-b border-slate-100 px-4 sm:px-5'>
+        <div className='flex border-b border-zinc-700 px-4 sm:px-5'>
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -116,13 +116,13 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
               onClick={() => handleTabClick(tab)}
               className={`mr-3 border-b-2 py-2.5 text-xs font-medium transition-colors sm:mr-4 sm:text-sm ${
                 activeTab === tab && tab === 'Notes'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
+                  ? 'border-cyan-500 text-cyan-400'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {tab}
               {tab === 'Comments' && task.comments !== undefined && (
-                <span className='ml-1 text-slate-400'>({task.comments})</span>
+                <span className='ml-1 text-zinc-500'>({task.comments})</span>
               )}
             </button>
           ))}
@@ -132,10 +132,10 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
         <div className='flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4'>
           {/* Action items */}
           <div className='flex items-center justify-between'>
-            <p className='text-[10px] font-semibold uppercase tracking-widest text-slate-400'>
+            <p className='text-[10px] font-semibold uppercase tracking-widest text-zinc-500'>
               Action Items
             </p>
-            <span className='text-xs font-semibold text-blue-500'>
+            <span className='text-xs font-semibold text-cyan-400'>
               {doneCount}/{actionItems.length} Done
             </span>
           </div>
@@ -144,13 +144,13 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
             {actionItems.map((item, i) => (
               <div
                 key={i}
-                className='flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3'
+                className='flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 sm:px-4 sm:py-3'
               >
                 <div
                   className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md ${
                     item.done
-                      ? 'bg-blue-500'
-                      : 'border-2 border-slate-300 bg-white'
+                      ? 'bg-cyan-500'
+                      : 'border-2 border-zinc-600 bg-zinc-700'
                   }`}
                 >
                   {item.done && (
@@ -172,8 +172,8 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
                 <span
                   className={`text-xs sm:text-sm ${
                     item.done
-                      ? 'text-slate-400 line-through'
-                      : 'text-slate-700'
+                      ? 'text-zinc-500 line-through'
+                      : 'text-zinc-300'
                   }`}
                 >
                   {item.label}
@@ -186,15 +186,15 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
           <div className='mt-4'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>
-                <Paperclip size={12} className='text-slate-400' />
-                <p className='text-[10px] font-semibold uppercase tracking-widest text-slate-400'>
+                <Paperclip size={12} className='text-zinc-500' />
+                <p className='text-[10px] font-semibold uppercase tracking-widest text-zinc-500'>
                   Attachments
                 </p>
               </div>
               <button
                 id='add-attachment-btn'
                 onClick={() => setShowFiles(true)}
-                className='flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-700'
+                className='flex items-center gap-1 text-xs font-semibold text-cyan-400 hover:text-cyan-300'
               >
                 <Plus size={12} /> Add New
               </button>
@@ -204,13 +204,13 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
               {attachments.map((file, i) => (
                 <div
                   key={i}
-                  className='flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 p-2.5 sm:p-3'
+                  className='flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 p-2.5 sm:p-3'
                 >
                   <div
                     className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
                       file.type === 'pdf'
-                        ? 'bg-red-100 text-red-600'
-                        : 'bg-blue-100 text-blue-600'
+                        ? 'bg-red-500/10 text-red-400'
+                        : 'bg-cyan-500/10 text-cyan-400'
                     }`}
                   >
                     {file.type === 'pdf' ? (
@@ -220,10 +220,10 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
                     )}
                   </div>
                   <div className='min-w-0'>
-                    <p className='truncate text-xs font-semibold text-slate-700'>
+                    <p className='truncate text-xs font-semibold text-zinc-300'>
                       {file.name}
                     </p>
-                    <p className='text-[10px] text-slate-400'>{file.size}</p>
+                    <p className='text-[10px] text-zinc-500'>{file.size}</p>
                   </div>
                 </div>
               ))}
@@ -232,7 +232,7 @@ export default function TaskDetailPanel({ task, onClose, onEdit }: Props) {
             {/* Open full files view */}
             <button
               onClick={() => setShowFiles(true)}
-              className='mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 py-2 text-xs font-medium text-slate-400 hover:border-blue-300 hover:text-blue-500'
+              className='mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-700 py-2 text-xs font-medium text-zinc-500 hover:border-cyan-500/50 hover:text-cyan-400'
             >
               <MessageCircle size={12} />
               View all files

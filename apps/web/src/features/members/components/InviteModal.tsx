@@ -10,11 +10,11 @@ type Props = {
 };
 
 const roleBadge = {
-  admin:  'bg-red-100 text-red-600',
-  member: 'bg-blue-100 text-blue-600',
+  admin:  'bg-red-500/10 text-red-400',
+  member: 'bg-cyan-500/10 text-cyan-400',
 };
 
-const inp = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+const inp = 'w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20';
 
 export default function InviteModal({ open, onClose, onInviteSent }: Props) {
   const [name,       setName]       = useState('');
@@ -100,16 +100,16 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
   const canSend = name.trim().length > 0 && email.trim().includes('@') && !sending;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4'>
-      <div className='w-full max-w-md rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl'>
+    <div className='fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center sm:p-4'>
+      <div className='w-full max-w-md rounded-t-2xl bg-zinc-900 shadow-2xl sm:rounded-2xl'>
 
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
+        <div className='flex items-center justify-between border-b border-zinc-700 px-6 py-4'>
           <div>
-            <h2 className='font-bold text-slate-900'>Invite Team Member</h2>
-            <p className='text-xs text-slate-400'>An email with a sign-up link will be sent</p>
+            <h2 className='font-bold text-white'>Invite Team Member</h2>
+            <p className='text-xs text-zinc-400'>An email with a sign-up link will be sent</p>
           </div>
-          <button onClick={onClose} className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'>
+          <button onClick={onClose} className='rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-700'>
             <X size={18} />
           </button>
         </div>
@@ -119,7 +119,7 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
 
           {/* Name */}
           <div className='relative'>
-            <User size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
+            <User size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500' />
             <input
               type='text'
               value={name}
@@ -133,7 +133,7 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
           {/* Email + Role */}
           <div className='flex gap-2'>
             <div className='relative flex-1'>
-              <Mail size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
+              <Mail size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500' />
               <input
                 type='email'
                 value={email}
@@ -146,7 +146,7 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'admin' | 'member')}
-              className='rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500'
+              className='rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500'
             >
               <option value='member'>Member</option>
               <option value='admin'>Admin</option>
@@ -154,7 +154,7 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
           </div>
 
           {/* Role descriptions */}
-          <div className='grid grid-cols-2 gap-2 text-center text-[10px] text-slate-400'>
+          <div className='grid grid-cols-2 gap-2 text-center text-[10px] text-zinc-500'>
             <span>Member — can view &amp; work on tasks</span>
             <span>Admin — full access including invites</span>
           </div>
@@ -163,7 +163,7 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
           <button
             onClick={handleSend}
             disabled={!canSend}
-            className='flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40'
+            className='flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 py-3 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-40'
           >
             <Send size={15} />
             {sending ? 'Sending…' : 'Send Invite'}
@@ -171,34 +171,34 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
 
           {/* Divider */}
           <div className='flex items-center gap-3 pt-1'>
-            <div className='h-px flex-1 bg-slate-100' />
-            <span className='text-xs text-slate-400'>Pending Invitations</span>
-            <div className='h-px flex-1 bg-slate-100' />
+            <div className='h-px flex-1 bg-zinc-700' />
+            <span className='text-xs text-zinc-500'>Pending Invitations</span>
+            <div className='h-px flex-1 bg-zinc-700' />
           </div>
 
           {/* Invite list */}
           {loadingList ? (
-            <p className='py-4 text-center text-sm text-slate-400'>Loading…</p>
+            <p className='py-4 text-center text-sm text-zinc-500'>Loading…</p>
           ) : invites.length === 0 ? (
-            <p className='py-4 text-center text-sm text-slate-400'>No pending invitations</p>
+            <p className='py-4 text-center text-sm text-zinc-500'>No pending invitations</p>
           ) : (
             <div className='space-y-2'>
               {invites.map((inv) => (
                 <div
                   key={inv.id}
-                  className='flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3'
+                  className='flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3'
                 >
                   <div className='flex items-center gap-3 min-w-0'>
-                    <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600'>
+                    <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-cyan-500/10 text-xs font-bold text-cyan-400'>
                       {inv.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div className='min-w-0'>
-                      <p className='truncate text-sm font-medium text-slate-700'>{inv.name}</p>
+                      <p className='truncate text-sm font-medium text-zinc-300'>{inv.name}</p>
                       <div className='mt-0.5 flex items-center gap-2'>
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${roleBadge[inv.systemRole]}`}>
                           {inv.systemRole}
                         </span>
-                        <span className='flex items-center gap-1 text-[10px] text-slate-400'>
+                        <span className='flex items-center gap-1 text-[10px] text-zinc-500'>
                           <Clock size={10} />
                           {new Date(inv.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                         </span>
@@ -212,7 +212,7 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
                       title='Resend invite'
                       disabled={resendingId === inv.id}
                       onClick={() => handleResend(inv.id)}
-                      className='rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-blue-500 disabled:opacity-40'
+                      className='rounded-lg p-1.5 text-zinc-500 hover:bg-cyan-500/10 hover:text-cyan-400 disabled:opacity-40'
                     >
                       <RefreshCw size={13} className={resendingId === inv.id ? 'animate-spin' : ''} />
                     </button>
@@ -221,7 +221,7 @@ export default function InviteModal({ open, onClose, onInviteSent }: Props) {
                       title='Cancel invite'
                       disabled={cancellingId === inv.id}
                       onClick={() => handleCancel(inv.id)}
-                      className='rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-40'
+                      className='rounded-lg p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40'
                     >
                       <Trash2 size={13} />
                     </button>

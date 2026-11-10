@@ -36,10 +36,9 @@ export default function LeaderboardTable() {
   ];
 
   return (
+    <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-6">
 
-    <div className="rounded-2xl border border-gray-200 bg-white p-6">
-
-      <h2 className="mb-5 text-lg font-bold">
+      <h2 className="mb-5 text-lg font-bold text-white">
         Full Ranking
       </h2>
 

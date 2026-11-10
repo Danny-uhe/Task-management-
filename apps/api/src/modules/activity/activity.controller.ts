@@ -11,9 +11,7 @@ export async function getMyActivity(req: Request, res: Response) {
 
     return res.json({
       success: true,
-      tasks: activity.tasks,
-      notifications: activity.notifications,
-      activity,
+      ...activity,
     });
   } catch (error) {
     return res.status(500).json({

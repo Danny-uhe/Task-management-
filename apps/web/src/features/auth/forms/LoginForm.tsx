@@ -64,9 +64,9 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='w-full max-w-md'>
-      <h1 className='text-3xl font-bold text-center'>Welcome back</h1>
+      <h1 className='text-3xl font-bold text-center text-white'>Welcome back</h1>
 
-      <p className='mt-2 mb-6 text-center text-sm text-[var(--color-text-secondary)]'>
+      <p className='mt-2 mb-6 text-center text-sm text-zinc-400'>
         Log in to your TaskSync workspace
       </p>
 
@@ -92,7 +92,7 @@ export default function LoginForm() {
           onChange={() => setValue('remember', !watch('remember'))}
         />
 
-        <Link to='/forgot-password' className='text-sm text-[var(--color-primary)] hover:underline'>
+        <Link to='/forgot-password' className='text-sm text-cyan-400 hover:underline'>
           Forgot password?
         </Link>
       </div>

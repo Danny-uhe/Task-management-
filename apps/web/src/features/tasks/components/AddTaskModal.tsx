@@ -10,8 +10,8 @@ import type { TaskStatus, TaskPriority } from '../types/types';
 
 const priorities: { value: TaskPriority; label: string; dot: string }[] = [
   { value: 'high',   label: 'High',   dot: 'bg-red-500'    },
-  { value: 'medium', label: 'Medium', dot: 'bg-orange-400' },
-  { value: 'low',    label: 'Low',    dot: 'bg-slate-400'  },
+  { value: 'medium', label: 'Medium', dot: 'bg-amber-400'  },
+  { value: 'low',    label: 'Low',    dot: 'bg-zinc-500'   },
 ];
 
 const statuses: { value: TaskStatus; label: string }[] = [
@@ -25,9 +25,9 @@ type AttachedFile = { name: string; size: string; type: 'pdf' | 'image' | 'file'
 type Member = { id: string; name: string; avatar?: string | null; role?: string };
 
 function fileIcon(type: AttachedFile['type']) {
-  if (type === 'pdf')   return <FileText  size={16} className='text-red-500'  />;
-  if (type === 'image') return <ImageIcon size={16} className='text-blue-500' />;
-  return                       <File      size={16} className='text-slate-400' />;
+  if (type === 'pdf')   return <FileText  size={16} className='text-red-400'  />;
+  if (type === 'image') return <ImageIcon size={16} className='text-cyan-400' />;
+  return                       <File      size={16} className='text-zinc-500' />;
 }
 
 function guessType(name: string): AttachedFile['type'] {
@@ -147,16 +147,16 @@ export default function AddTaskModal() {
 
   const handleClose = () => { reset(); closeAddTask(); };
 
-  const inp = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+  const inp = 'w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20';
 
   return (
-    <div className='fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4'>
-      <div className='flex w-full max-w-md flex-col rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl'>
+    <div className='fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center sm:p-4'>
+      <div className='flex w-full max-w-md flex-col rounded-t-2xl bg-zinc-900 shadow-2xl sm:rounded-2xl'>
 
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
-          <h2 className='text-lg font-bold text-slate-900'>Add Task</h2>
-          <button onClick={handleClose} className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'>
+        <div className='flex items-center justify-between border-b border-zinc-700 px-6 py-4'>
+          <h2 className='text-lg font-bold text-white'>Add Task</h2>
+          <button onClick={handleClose} className='rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-700'>
             <X size={18} />
           </button>
         </div>
@@ -166,9 +166,9 @@ export default function AddTaskModal() {
 
           {/* Project selector */}
           <div>
-            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Project</label>
+            <label className='mb-1.5 block text-sm font-semibold text-zinc-300'>Project</label>
             {projects.length === 0 ? (
-              <p className='text-sm text-slate-400'>No projects found. Ask an admin to create one.</p>
+              <p className='text-sm text-zinc-500'>No projects found. Ask an admin to create one.</p>
             ) : (
               <select
                 value={projectId}
@@ -184,7 +184,7 @@ export default function AddTaskModal() {
 
           {/* Title */}
           <div>
-            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Task title</label>
+            <label className='mb-1.5 block text-sm font-semibold text-zinc-300'>Task title</label>
             <input
               autoFocus
               value={title}
@@ -196,7 +196,7 @@ export default function AddTaskModal() {
 
           {/* Description */}
           <div>
-            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Description</label>
+            <label className='mb-1.5 block text-sm font-semibold text-zinc-300'>Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -208,9 +208,9 @@ export default function AddTaskModal() {
 
           {/* Assign to */}
           <div>
-            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Assign to</label>
+            <label className='mb-1.5 block text-sm font-semibold text-zinc-300'>Assign to</label>
             {members.length === 0 ? (
-              <p className='text-xs text-slate-400'>No members in this project yet.</p>
+              <p className='text-xs text-zinc-500'>No members in this project yet.</p>
             ) : (
               <div className='flex flex-wrap gap-2'>
                 {/* Unassigned option */}
@@ -219,8 +219,8 @@ export default function AddTaskModal() {
                   onClick={() => setAssignedToId('')}
                   className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                     assignedToId === ''
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
-                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
+                      : 'border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600'
                   }`}
                 >
                   <UserCircle2 size={13} />
@@ -234,11 +234,11 @@ export default function AddTaskModal() {
                     onClick={() => setAssignedToId(m.id)}
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                       assignedToId === m.id
-                        ? 'border-blue-500 bg-blue-50 text-blue-600'
-                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                        ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
+                        : 'border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600'
                     }`}
                   >
-                    <span className='flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white'>
+                    <span className='flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 text-[9px] font-bold text-white'>
                       {getInitials(m.name)}
                     </span>
                     {m.name.split(' ')[0]}
@@ -250,9 +250,9 @@ export default function AddTaskModal() {
 
           {/* Due date */}
           <div>
-            <label className='mb-1.5 block text-sm font-semibold text-slate-700'>Due date</label>
+            <label className='mb-1.5 block text-sm font-semibold text-zinc-300'>Due date</label>
             <div className='relative'>
-              <CalendarDays size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
+              <CalendarDays size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500' />
               <input
                 type='date'
                 value={dueDate}
@@ -264,7 +264,7 @@ export default function AddTaskModal() {
 
           {/* Priority */}
           <div>
-            <label className='mb-2 block text-sm font-semibold text-slate-700'>Priority</label>
+            <label className='mb-2 block text-sm font-semibold text-zinc-300'>Priority</label>
             <div className='grid grid-cols-3 gap-2'>
               {priorities.map((p) => (
                 <button
@@ -273,12 +273,12 @@ export default function AddTaskModal() {
                   onClick={() => setPriority(p.value)}
                   className={`flex flex-col items-center gap-2 rounded-xl border-2 py-3 transition-all ${
                     priority === p.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
+                      ? 'border-cyan-500 bg-cyan-500/10'
+                      : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
                   }`}
                 >
                   <span className={`h-3 w-3 rounded-full ${p.dot}`} />
-                  <span className={`text-sm font-semibold ${priority === p.value ? 'text-slate-900' : 'text-slate-500'}`}>
+                  <span className={`text-sm font-semibold ${priority === p.value ? 'text-white' : 'text-zinc-400'}`}>
                     {p.label}
                   </span>
                 </button>
@@ -288,7 +288,7 @@ export default function AddTaskModal() {
 
           {/* Status */}
           <div>
-            <label className='mb-2 block text-sm font-semibold text-slate-700'>Status</label>
+            <label className='mb-2 block text-sm font-semibold text-zinc-300'>Status</label>
             <div className='flex flex-wrap gap-2'>
               {statuses.map((s) => (
                 <button
@@ -297,8 +297,8 @@ export default function AddTaskModal() {
                   onClick={() => setStatus(s.value)}
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                     status === s.value
-                      ? 'bg-blue-500 text-white'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                      ? 'bg-cyan-500 text-white'
+                      : 'border border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600'
                   }`}
                 >
                   {s.label}
@@ -309,7 +309,7 @@ export default function AddTaskModal() {
 
           {/* Attachments */}
           <div>
-            <label className='mb-2 block text-sm font-semibold text-slate-700'>Attachments</label>
+            <label className='mb-2 block text-sm font-semibold text-zinc-300'>Attachments</label>
             <button
               type='button'
               onClick={() => fileRef.current?.click()}
@@ -317,32 +317,32 @@ export default function AddTaskModal() {
               onDragLeave={() => setDragging(false)}
               onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
               className={`flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed py-6 transition-colors ${
-                dragging ? 'border-blue-400 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                dragging ? 'border-cyan-400 bg-cyan-500/10' : 'border-zinc-700 hover:border-cyan-500/50 hover:bg-zinc-800'
               }`}
             >
-              <Upload size={22} className='text-blue-400' />
+              <Upload size={22} className='text-cyan-400' />
               <p className='text-sm'>
-                <span className='font-semibold text-blue-500'>Click to upload</span>
-                <span className='text-slate-400'> or drag and drop</span>
+                <span className='font-semibold text-cyan-400'>Click to upload</span>
+                <span className='text-zinc-500'> or drag and drop</span>
               </p>
-              <p className='text-xs text-slate-400'>PDF, PNG, JPG — up to 10 MB each</p>
+              <p className='text-xs text-zinc-500'>PDF, PNG, JPG — up to 10 MB each</p>
             </button>
             <input ref={fileRef} type='file' multiple className='hidden' onChange={(e) => addFiles(e.target.files)} />
 
             {attachments.length > 0 && (
               <div className='mt-2 space-y-2'>
                 {attachments.map((f, i) => (
-                  <div key={i} className='flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5'>
+                  <div key={i} className='flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5'>
                     <div className='flex items-center gap-2'>
                       {fileIcon(f.type)}
                       <div>
-                        <p className='text-xs font-semibold text-slate-700'>{f.name}</p>
-                        <p className='text-[10px] text-slate-400'>{f.size}</p>
+                        <p className='text-xs font-semibold text-zinc-300'>{f.name}</p>
+                        <p className='text-[10px] text-zinc-500'>{f.size}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
-                      className='rounded p-1 text-slate-300 hover:text-red-500'
+                      className='rounded p-1 text-zinc-600 hover:text-red-400'
                     >
                       <Trash2 size={13} />
                     </button>
@@ -354,17 +354,17 @@ export default function AddTaskModal() {
         </div>
 
         {/* Footer */}
-        <div className='flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4'>
+        <div className='flex items-center justify-end gap-3 border-t border-zinc-700 px-6 py-4'>
           <button
             onClick={handleClose}
-            className='rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50'
+            className='rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800'
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={!title.trim() || !projectId || saving}
-            className='rounded-xl bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40'
+            className='rounded-xl bg-cyan-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-40'
           >
             {saving ? 'Creating…' : 'Create Task'}
           </button>

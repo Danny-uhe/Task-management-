@@ -27,6 +27,9 @@ model User {
   isOnline Boolean @default(false)
   points   Int     @default(0)
   streak   Int     @default(0)
+  leaderboardVisible Boolean @default(false)
+  shareStreak Boolean @default(false)
+  notifyAchievement Boolean @default(true)
 
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
@@ -113,6 +116,8 @@ model Task {
 
   status   String @default("todo")
   priority String @default("medium")
+  isArchived Boolean @default(false)
+  archivedAt DateTime?
 
   dueDate DateTime?
   points  Int       @default(0)

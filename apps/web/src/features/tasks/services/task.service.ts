@@ -17,10 +17,17 @@ export interface ApiTask {
   assignedToId?: string | null;
   assignedTo?:  { id: string; name: string; avatar?: string | null } | null;
   createdById?: string | null;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   createdBy?:   { id: string; name: string } | null;
   createdAt:    string;
   updatedAt:    string;
   _count?:      { comments: number; attachments: number };
+}
+
+export interface ArchivedTask extends ApiTask {
+  archivedAt: string | null;
+  project: { id: string; name: string; color: string | null };
 }
 
 export interface CreateTaskPayload {
@@ -73,5 +80,17 @@ export const taskService = {
   /** Delete a task */
   deleteTask(projectId: string, taskId: string) {
     return api.delete(`/projects/${projectId}/tasks/${taskId}`);
+  },
+
+  getArchivedTasks() {
+    return api.get<{ success: boolean; tasks: ArchivedTask[] }>('/tasks/archived');
+  },
+
+  archiveTask(taskId: string) {
+    return api.patch<{ success: boolean; task: ApiTask }>(`/tasks/${taskId}/archive`);
+  },
+
+  restoreTask(taskId: string) {
+    return api.patch<{ success: boolean; task: ApiTask }>(`/tasks/${taskId}/restore`);
   },
 };

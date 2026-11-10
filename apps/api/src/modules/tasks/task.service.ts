@@ -130,6 +130,7 @@ export async function getProjectTasks(
   return prisma.task.findMany({
     where: {
       projectId,
+      isArchived: false,
     },
     include: {
       createdBy: {
@@ -220,7 +221,6 @@ export async function getTaskById(
   if (!task) {
     throw new Error("Task not found");
   }
-
   const member = await prisma.projectMember.findUnique({
     where: {
       userId_projectId: {
@@ -250,6 +250,9 @@ export async function updateTask(
 
   if (!task) {
     throw new Error("Task not found");
+  }
+  if (task.isArchived) {
+    throw new Error("Restore this task before editing it");
   }
 
   const member = await prisma.projectMember.findUnique({
@@ -382,4 +385,73 @@ export async function deleteTask(
   return true;
 }
 
+export async function getArchivedTasks(userId: string) {
+  return prisma.task.findMany({
+    where: {
+      isArchived: true,
+      project: {
+        members: { some: { userId } },
+      },
+    },
+    include: {
+      project: { select: { id: true, name: true, color: true } },
+      assignedTo: { select: { id: true, name: true, avatar: true } },
+    },
+    orderBy: { archivedAt: "desc" },
+  });
+}
 
+export async function archiveTask(taskId: string, userId: string) {
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task) throw new Error("Task not found");
+  if (task.status !== "done") throw new Error("Only completed tasks can be archived");
+
+  const member = await prisma.projectMember.findUnique({
+    where: { userId_projectId: { userId, projectId: task.projectId } },
+  });
+  if (!member) throw new Error("You are not a member of this project");
+  if (task.isArchived) throw new Error("Task is already archived");
+
+  const archived = await prisma.task.update({
+    where: { id: taskId },
+    data: { isArchived: true, archivedAt: new Date() },
+  });
+
+  try {
+    getIO().to(`project:${task.projectId}`).emit("task_updated", {
+      action: "updated",
+      task: archived,
+    });
+  } catch (error) {
+    console.error("[Task] Failed to broadcast archive update:", error);
+  }
+
+  return archived;
+}
+
+export async function restoreTask(taskId: string, userId: string) {
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task) throw new Error("Task not found");
+
+  const member = await prisma.projectMember.findUnique({
+    where: { userId_projectId: { userId, projectId: task.projectId } },
+  });
+  if (!member) throw new Error("You are not a member of this project");
+  if (!task.isArchived) throw new Error("Task is not archived");
+
+  const restored = await prisma.task.update({
+    where: { id: taskId },
+    data: { isArchived: false, archivedAt: null },
+  });
+
+  try {
+    getIO().to(`project:${task.projectId}`).emit("task_updated", {
+      action: "updated",
+      task: restored,
+    });
+  } catch (error) {
+    console.error("[Task] Failed to broadcast restore update:", error);
+  }
+
+  return restored;
+}

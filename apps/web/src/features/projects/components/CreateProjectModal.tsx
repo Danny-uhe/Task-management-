@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { projectService } from "@/services/project.service";
 import { useProjectStore } from "@/store/projectStore";
@@ -49,12 +49,12 @@ export default function CreateProjectModal({ open, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-zinc-900 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">New Project</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100">
+        <div className="flex items-center justify-between border-b border-zinc-700 px-6 py-4">
+          <h2 className="text-lg font-semibold text-white">New Project</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-700">
             <X size={18} />
           </button>
         </div>
@@ -62,35 +62,35 @@ export default function CreateProjectModal({ open, onClose }: Props) {
         <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
           {/* Name */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Project Name <span className="text-red-500">*</span>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-300">
+              Project Name <span className="text-red-400">*</span>
             </label>
             <input
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Q4 Launch"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Description <span className="text-gray-400 font-normal">(optional)</span>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-300">
+              Description <span className="text-zinc-500 font-normal">(optional)</span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDesc(e.target.value)}
               placeholder="What is this project about?"
               rows={3}
-              className="w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20"
             />
           </div>
 
           {/* Colour */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Colour</label>
+            <label className="mb-2 block text-sm font-medium text-zinc-300">Colour</label>
             <div className="flex flex-wrap gap-2">
               {COLOURS.map((c) => (
                 <button
@@ -109,9 +109,9 @@ export default function CreateProjectModal({ open, onClose }: Props) {
           </div>
 
           {/* Preview pill */}
-          <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-4 py-3">
+          <div className="flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-3">
             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-zinc-300">
               {name.trim() || "Project name preview"}
             </span>
           </div>
@@ -121,14 +121,14 @@ export default function CreateProjectModal({ open, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="rounded-xl border border-zinc-700 px-5 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-cyan-500 px-5 py-2 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-50"
             >
               {loading && <Loader2 size={14} className="animate-spin" />}
               Create Project

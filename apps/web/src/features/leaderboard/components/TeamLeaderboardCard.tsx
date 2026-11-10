@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Trophy, Loader2 } from "lucide-react";
 import { leaderboardService, type LeaderboardUser } from "../services/leaderboard.service";
 import { useAuthStore } from "@/store/authStore";
@@ -20,13 +20,18 @@ export default function TeamLeaderboardCard() {
   const currentUser           = useAuthStore((s) => s.user);
   const [users, setUsers]     = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
+  const loadLeaderboard = useCallback(() => {
+    setLoading(true);
+    setError('');
     leaderboardService.getLeaderboard()
-      .then((r) => setUsers(r.data.leaderboard ?? []))
-      .catch(() => {})
+      .then((r) => setUsers(r.data.leaderboard))
+      .catch(() => setError('Could not load team rankings.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { void loadLeaderboard(); }, [loadLeaderboard]);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5">
@@ -39,6 +44,11 @@ export default function TeamLeaderboardCard() {
       {loading ? (
         <div className="flex justify-center py-6">
           <Loader2 size={20} className="animate-spin text-blue-500" />
+        </div>
+      ) : error ? (
+        <div role="alert" className="py-4 text-center text-sm text-red-600">
+          <p>{error}</p>
+          <button type="button" onClick={loadLeaderboard} className="mt-1 font-semibold underline">Retry</button>
         </div>
       ) : users.length === 0 ? (
         <p className="text-sm text-gray-400 text-center py-4">No data yet</p>

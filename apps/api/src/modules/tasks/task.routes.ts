@@ -15,7 +15,10 @@ import {
   getAll, 
   getOne,
   remove,
-  update
+  update,
+  getArchived,
+  archive,
+  restore,
 } from "./task.controller.js";
 
 import {
@@ -54,11 +57,15 @@ router.get(
 );
 
 // Get a specific task by ID
+router.get("/tasks/archived", authenticate, getArchived);
+
 router.get(
   "/tasks/:taskId",
   authenticate,
   getOne
 );
+router.patch("/tasks/:taskId/archive", authenticate, archive);
+router.patch("/tasks/:taskId/restore", authenticate, restore);
 
 router.get(
   "/tasks/:taskId/attachments",

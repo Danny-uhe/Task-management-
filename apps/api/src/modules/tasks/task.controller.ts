@@ -1,5 +1,14 @@
 import { Request, Response } from "express";
-import { createTask, getProjectTasks, getTaskById, updateTask, deleteTask } from "./task.service.js";
+import {
+  createTask,
+  getProjectTasks,
+  getTaskById,
+  updateTask,
+  deleteTask,
+  getArchivedTasks as getArchivedTasksService,
+  archiveTask as archiveTaskService,
+  restoreTask as restoreTaskService,
+} from "./task.service.js";
 import { createTaskSchema, updateTaskSchema } from "./task.validation.js";
 
 export async function create(
@@ -149,6 +158,50 @@ export async function remove(
     const status = message === "Task not found" ? 404 : 403;
 
     return res.status(status).json({
+      success: false,
+      message,
+    });
+  }
+}
+
+export async function getArchived(req: Request, res: Response) {
+  try {
+    const tasks = await getArchivedTasksService(req.user!.userId);
+    return res.json({ success: true, tasks });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to fetch archived tasks",
+    });
+  }
+}
+
+export async function archive(req: Request, res: Response) {
+  try {
+    const task = await archiveTaskService(
+      req.params.taskId as string,
+      req.user!.userId
+    );
+    return res.json({ success: true, task });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to archive task";
+    return res.status(message === "Task not found" ? 404 : 400).json({
+      success: false,
+      message,
+    });
+  }
+}
+
+export async function restore(req: Request, res: Response) {
+  try {
+    const task = await restoreTaskService(
+      req.params.taskId as string,
+      req.user!.userId
+    );
+    return res.json({ success: true, task });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to restore task";
+    return res.status(message === "Task not found" ? 404 : 400).json({
       success: false,
       message,
     });

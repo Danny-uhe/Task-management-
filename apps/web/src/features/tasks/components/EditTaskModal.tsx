@@ -12,8 +12,8 @@ type Props = {
 
 const priorities: { value: TaskPriority; label: string; dot: string }[] = [
   { value: 'high',   label: 'High',   dot: 'bg-red-500'    },
-  { value: 'medium', label: 'Medium', dot: 'bg-orange-400' },
-  { value: 'low',    label: 'Low',    dot: 'bg-slate-400'  },
+  { value: 'medium', label: 'Medium', dot: 'bg-amber-400'  },
+  { value: 'low',    label: 'Low',    dot: 'bg-zinc-500'   },
 ];
 
 const statuses: { value: TaskStatus; label: string }[] = [
@@ -24,9 +24,9 @@ const statuses: { value: TaskStatus; label: string }[] = [
 ];
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+  'w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20';
 const labelClass =
-  'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400';
+  'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500';
 
 export default function EditTaskModal({ open, task, onClose }: Props) {
   const { updateTask } = useTaskContext();
@@ -77,13 +77,13 @@ export default function EditTaskModal({ open, task, onClose }: Props) {
   };
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50'>
-      <div className='w-full max-w-lg rounded-2xl bg-white shadow-2xl'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60'>
+      <div className='w-full max-w-lg rounded-2xl bg-zinc-900 shadow-2xl'>
 
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-slate-100 px-6 py-4'>
-          <h2 className='text-lg font-bold text-slate-900'>Edit Task</h2>
-          <button onClick={onClose} className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'>
+        <div className='flex items-center justify-between border-b border-zinc-700 px-6 py-4'>
+          <h2 className='text-lg font-bold text-white'>Edit Task</h2>
+          <button onClick={onClose} className='rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-700'>
             <X size={18} />
           </button>
         </div>
@@ -154,17 +154,17 @@ export default function EditTaskModal({ open, task, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className='flex justify-end gap-3 border-t border-slate-100 px-6 py-4'>
+        <div className='flex justify-end gap-3 border-t border-zinc-700 px-6 py-4'>
           <button
             onClick={onClose}
-            className='rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50'
+            className='rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800'
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!title.trim() || saving}
-            className='rounded-xl bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40'
+            className='rounded-xl bg-cyan-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-40'
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </button>

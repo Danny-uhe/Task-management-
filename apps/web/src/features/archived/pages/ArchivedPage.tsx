@@ -1,107 +1,92 @@
-import { useState } from 'react';
-import { Search, ArchiveRestore, Trash2, CalendarDays } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search, ArchiveRestore, Trash2, CalendarDays, Loader2 } from 'lucide-react';
 import AppLayout from '@/layout/AppLayout';
-
-type ArchivedTask = {
-  id: number;
-  title: string;
-  description: string;
-  priority: 'High' | 'Medium' | 'Low';
-  completedDate: string;
-  originalDueDate: string;
-  assignee: string;
-  assigneeColor: string;
-};
-
-const INITIAL_TASKS: ArchivedTask[] = [
-  {
-    id: 1,
-    title: 'Draft Team Guidelines',
-    description: 'Finalized the team code-of-conduct guidelines document.',
-    priority: 'Low',
-    completedDate: 'Jul 3, 2026',
-    originalDueDate: 'Jul 3, 2026',
-    assignee: 'SE',
-    assigneeColor: 'bg-blue-500',
-  },
-  {
-    id: 2,
-    title: 'Audit Spacing System',
-    description: 'Full audit of the design system spacing tokens completed.',
-    priority: 'High',
-    completedDate: 'Jun 30, 2026',
-    originalDueDate: 'Jun 30, 2026',
-    assignee: 'DE',
-    assigneeColor: 'bg-purple-500',
-  },
-  {
-    id: 3,
-    title: 'Review Typography Tokens',
-    description: 'Reviewed and updated all typography tokens in the design system.',
-    priority: 'Low',
-    completedDate: 'Jun 28, 2026',
-    originalDueDate: 'Jun 28, 2026',
-    assignee: 'DE',
-    assigneeColor: 'bg-purple-500',
-  },
-  {
-    id: 4,
-    title: 'Authentication UI',
-    description: 'Login and register pages fully completed and handed off.',
-    priority: 'Medium',
-    completedDate: 'Jun 20, 2026',
-    originalDueDate: 'Jun 20, 2026',
-    assignee: 'SE',
-    assigneeColor: 'bg-blue-500',
-  },
-  {
-    id: 5,
-    title: 'Q3 Roadmap Planning',
-    description: 'Planned all features and priorities for Q3 with the product team.',
-    priority: 'High',
-    completedDate: 'Jun 15, 2026',
-    originalDueDate: 'Jun 14, 2026',
-    assignee: 'RI',
-    assigneeColor: 'bg-emerald-500',
-  },
-];
+import { useTaskContext } from '@/app/Providers/TaskContext';
+import { taskService, type ArchivedTask } from '@/features/tasks/services/task.service';
 
 const priorityStyles: Record<string, string> = {
-  High: 'bg-red-50 text-red-600',
-  Medium: 'bg-orange-50 text-orange-500',
-  Low: 'bg-slate-100 text-slate-500',
+  high: 'bg-red-50 text-red-600',
+  medium: 'bg-orange-50 text-orange-500',
+  low: 'bg-slate-100 text-slate-500',
 };
 
+function initials(name?: string | null) {
+  return name?.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || '?';
+}
+
+function dateLabel(date?: string | null) {
+  return date ? new Date(date).toLocaleDateString() : 'No due date';
+}
+
 export default function ArchivedPage() {
-  const [tasks, setTasks] = useState<ArchivedTask[]>(INITIAL_TASKS);
+  const { refetch } = useTaskContext();
+  const [tasks, setTasks] = useState<ArchivedTask[]>([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
 
-  const visible = tasks.filter(
-    (t) =>
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.description.toLowerCase().includes(search.toLowerCase()),
-  );
+  const loadTasks = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await taskService.getArchivedTasks();
+      setTasks(data.tasks);
+    } catch {
+      setError('Could not load archived tasks. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const handleDelete = (id: number) =>
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+  useEffect(() => { void loadTasks(); }, [loadTasks]);
 
-  const handleRestore = (id: number) =>
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+  const visible = useMemo(() => tasks.filter((task) =>
+    `${task.title} ${task.description ?? ''} ${task.project.name}`
+      .toLowerCase().includes(search.toLowerCase()),
+  ), [tasks, search]);
+
+  async function handleRestore(task: ArchivedTask) {
+    setBusyTaskId(task.id);
+    setError('');
+    try {
+      await taskService.restoreTask(task.id);
+      setTasks((current) => current.filter((item) => item.id !== task.id));
+      refetch();
+    } catch (requestError) {
+      const message = (requestError as { response?: { data?: { message?: string } } })
+        .response?.data?.message;
+      setError(message ?? `Could not restore "${task.title}". Please try again.`);
+    } finally {
+      setBusyTaskId(null);
+    }
+  }
+
+  async function handleDelete(task: ArchivedTask) {
+    if (!window.confirm(`Permanently delete "${task.title}"? This cannot be undone.`)) return;
+    setBusyTaskId(task.id);
+    setError('');
+    try {
+      await taskService.deleteTask(task.projectId, task.id);
+      setTasks((current) => current.filter((item) => item.id !== task.id));
+    } catch {
+      setError(`Could not delete "${task.title}". Please try again.`);
+    } finally {
+      setBusyTaskId(null);
+    }
+  }
 
   return (
     <AppLayout>
       <div className='space-y-5'>
-        {/* Search + stats bar */}
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='relative w-full sm:w-72'>
-            <Search
-              size={15}
-              className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400'
-            />
+            <Search size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               placeholder='Search archived tasks...'
+              aria-label='Search archived tasks'
               className='h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
             />
           </div>
@@ -110,10 +95,27 @@ export default function ArchivedPage() {
           </p>
         </div>
 
-        {/* Task list */}
-        {visible.length === 0 ? (
+        {error && (
+          <div role='alert' className='flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700'>
+            <span>{error}</span>
+            {loading === false && tasks.length === 0 && (
+              <button type='button' onClick={() => void loadTasks()} className='font-semibold underline'>
+                Retry
+              </button>
+            )}
+          </div>
+        )}
+
+        {loading ? (
+          <div role='status' className='flex justify-center rounded-2xl border border-slate-200 bg-white py-20 text-blue-500'>
+            <Loader2 className='animate-spin' aria-label='Loading archived tasks' />
+          </div>
+        ) : error ? null : visible.length === 0 ? (
           <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 py-20 text-slate-400'>
-            <p className='text-sm font-medium'>No archived tasks found</p>
+            <p className='text-sm font-medium'>
+              {tasks.length === 0 ? 'No archived tasks yet' : 'No archived tasks match your search'}
+            </p>
+            {tasks.length === 0 && <p className='mt-1 text-xs'>Archive a completed task from its task menu.</p>}
           </div>
         ) : (
           <div className='space-y-3'>
@@ -122,49 +124,43 @@ export default function ArchivedPage() {
                 key={task.id}
                 className='flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:flex-row sm:items-start sm:justify-between'
               >
-                {/* Left: content */}
-                <div className='flex items-start gap-3 min-w-0'>
-                  <div
-                    className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${task.assigneeColor}`}
-                  >
-                    {task.assignee}
+                <div className='flex min-w-0 items-start gap-3'>
+                  <div className='mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white'>
+                    {initials(task.assignedTo?.name)}
                   </div>
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <h3 className='font-semibold text-slate-700 line-through'>
-                        {task.title}
-                      </h3>
-                      <span
-                        className={`rounded-md px-2 py-0.5 text-xs font-semibold ${priorityStyles[task.priority]}`}
-                      >
+                      <h3 className='font-semibold text-slate-700 line-through'>{task.title}</h3>
+                      <span className={`rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${priorityStyles[task.priority] ?? priorityStyles.low}`}>
                         {task.priority}
                       </span>
                     </div>
-                    <p className='mt-0.5 text-sm text-slate-400 line-clamp-1'>
-                      {task.description}
-                    </p>
+                    <p className='mt-0.5 line-clamp-1 text-sm text-slate-400'>{task.description || task.project.name}</p>
                     <div className='mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400'>
                       <span className='flex items-center gap-1'>
                         <CalendarDays size={12} />
-                        Due: {task.originalDueDate}
+                        Due: {dateLabel(task.dueDate)}
                       </span>
-                      <span>✓ Completed: {task.completedDate}</span>
+                      <span>Completed: {dateLabel(task.updatedAt)}</span>
+                      <span>Archived: {dateLabel(task.archivedAt)}</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Right: actions */}
                 <div className='flex flex-shrink-0 items-center gap-2 self-start sm:self-center'>
                   <button
-                    onClick={() => handleRestore(task.id)}
-                    className='flex items-center gap-1.5 rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50'
+                    type='button'
+                    disabled={busyTaskId === task.id}
+                    onClick={() => void handleRestore(task)}
+                    className='flex items-center gap-1.5 rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-50'
                   >
-                    <ArchiveRestore size={13} />
+                    {busyTaskId === task.id ? <Loader2 size={13} className='animate-spin' /> : <ArchiveRestore size={13} />}
                     Restore
                   </button>
                   <button
-                    onClick={() => handleDelete(task.id)}
-                    className='flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50'
+                    type='button'
+                    disabled={busyTaskId === task.id}
+                    onClick={() => void handleDelete(task)}
+                    className='flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50'
                   >
                     <Trash2 size={13} />
                     Delete

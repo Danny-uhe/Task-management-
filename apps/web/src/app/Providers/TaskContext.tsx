@@ -57,6 +57,7 @@ type TaskContextType = {
   addTask:      (projectId: string, data: Omit<Task, 'id' | 'projectId' | 'progress' | 'filter'>) => Promise<void>;
   updateTask:   (t: Task) => Promise<void>;
   deleteTask:   (projectId: string, id: string) => Promise<void>;
+  archiveTask:  (id: string) => Promise<void>;
   moveTask:     (id: string, newStatus: TaskStatus) => void;
   /** True if the current user can approve tasks (move to Done) in a given project */
   canApprove:   (projectId: string) => boolean;
@@ -195,6 +196,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const archiveTask = useCallback(async (id: string) => {
+    await taskService.archiveTask(id);
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  }, []);
+
   // ── Move task (drag-and-drop) — optimistic update ────────────────────────
   const moveTask = useCallback((id: string, newStatus: TaskStatus) => {
     setTasks((prev) => {
@@ -243,6 +249,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addTask,
         updateTask,
         deleteTask,
+        archiveTask,
         moveTask,
         canApprove,
         addTaskOpen,

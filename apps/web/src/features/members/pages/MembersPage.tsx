@@ -19,7 +19,7 @@ function getInitials(name: string) {
 }
 
 const AVATAR_COLORS = [
-  'bg-blue-500', 'bg-purple-500', 'bg-emerald-500',
+  'bg-cyan-500', 'bg-purple-500', 'bg-emerald-500',
   'bg-amber-500', 'bg-red-500',   'bg-teal-500',
 ];
 
@@ -136,9 +136,9 @@ export default function MembersPage() {
         {/* ── Top bar ── */}
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h1 className='text-xl font-bold text-slate-900 sm:text-2xl'>Team Members</h1>
-            <p className='mt-0.5 text-sm text-slate-400'>
-              {members.length} members · <span className='text-green-500 font-medium'>{activeCount} active</span>
+            <h1 className='text-xl font-bold text-white sm:text-2xl'>Team Members</h1>
+            <p className='mt-0.5 text-sm text-zinc-400'>
+              {members.length} members · <span className='text-green-400 font-medium'>{activeCount} active</span>
             </p>
           </div>
 
@@ -146,7 +146,7 @@ export default function MembersPage() {
           {isAdmin && (
             <button
               onClick={() => setInviteOpen(true)}
-              className='flex w-fit items-center gap-2 rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700'
+              className='flex w-fit items-center gap-2 rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-cyan-600'
             >
               <UserPlus size={16} />
               Invite Member
@@ -157,12 +157,12 @@ export default function MembersPage() {
         {/* ── Filter bar ── */}
         <div className='flex flex-wrap items-center gap-3'>
           <div className='relative flex-1 min-w-[200px] max-w-xs'>
-            <Search size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' />
+            <Search size={15} className='absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500' />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder='Search members...'
-              className='h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+              className='h-10 w-full rounded-xl border border-zinc-700 bg-zinc-800 pl-9 pr-4 text-sm text-white placeholder-zinc-500 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-400/20'
             />
           </div>
 
@@ -172,8 +172,8 @@ export default function MembersPage() {
               onClick={() => setFilterActive(f)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
                 filterActive === f
-                  ? 'bg-blue-500 text-white'
-                  : 'border border-slate-200 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-cyan-500 text-white'
+                  : 'border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
               }`}
             >
               {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -183,11 +183,11 @@ export default function MembersPage() {
 
         {/* ── Loading ── */}
         {loading ? (
-          <div className='flex items-center justify-center py-20 text-slate-400 text-sm'>
+          <div className='flex items-center justify-center py-20 text-zinc-500 text-sm'>
             Loading members…
           </div>
         ) : visible.length === 0 ? (
-          <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 py-16 text-slate-400'>
+          <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 py-16 text-zinc-500'>
             <p className='text-sm font-medium'>No members found</p>
           </div>
         ) : (
@@ -195,8 +195,8 @@ export default function MembersPage() {
             {visible.map((m) => (
               <div
                 key={m.id}
-                className={`relative rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md ${
-                  !m.isActive ? 'border-slate-200 opacity-60' : 'border-slate-200'
+                className={`relative rounded-2xl border bg-zinc-900 p-5 shadow-sm transition hover:shadow-md ${
+                  !m.isActive ? 'border-zinc-700 opacity-60' : 'border-zinc-700'
                 }`}
               >
                 {/* Three-dot menu — admin only */}
@@ -204,17 +204,17 @@ export default function MembersPage() {
                   <div className='absolute right-4 top-4'>
                     <button
                       onClick={() => setMenuOpenId(menuOpenId === m.id ? null : m.id)}
-                      className='rounded-lg p-1.5 text-slate-400 hover:bg-slate-100'
+                      className='rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-700'
                       disabled={actionLoading === m.id}
                     >
                       <MoreVertical size={16} />
                     </button>
 
                     {menuOpenId === m.id && (
-                      <div className='absolute right-0 top-8 z-10 w-48 rounded-xl border border-slate-100 bg-white py-1 shadow-xl'>
+                      <div className='absolute right-0 top-8 z-10 w-48 rounded-xl border border-zinc-700 bg-zinc-800 py-1 shadow-xl'>
                         <button
                           onClick={() => { navigate(`/profile/${m.id}`); setMenuOpenId(null); }}
-                          className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50'
+                          className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700'
                         >
                           <Eye size={14} /> View Profile
                         </button>
@@ -224,14 +224,14 @@ export default function MembersPage() {
                           m.systemRole === 'member' ? (
                             <button
                               onClick={() => handleMakeAdmin(m.id)}
-                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50'
+                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700'
                             >
                               <ShieldCheck size={14} /> Make Admin
                             </button>
                           ) : (
                             <button
                               onClick={() => handleMakeMember(m.id)}
-                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50'
+                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700'
                             >
                               <ShieldCheck size={14} /> Make Member
                             </button>
@@ -243,14 +243,14 @@ export default function MembersPage() {
                           m.isActive ? (
                             <button
                               onClick={() => handleDeactivate(m.id)}
-                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50'
+                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10'
                             >
                               <UserX size={14} /> Deactivate
                             </button>
                           ) : (
                             <button
                               onClick={() => handleActivate(m.id)}
-                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50'
+                              className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-green-400 hover:bg-green-500/10'
                             >
                               <UserCheck size={14} /> Activate
                             </button>
@@ -263,22 +263,27 @@ export default function MembersPage() {
 
                 {/* Avatar + name */}
                 <div className='flex items-center gap-4'>
-                  <div className='relative'>
+                  <button
+                    type='button'
+                    onClick={() => navigate(`/profile/${m.id}`)}
+                    aria-label={`View ${m.name}'s profile`}
+                    className='relative flex-shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2'
+                  >
                     {m.avatar ? (
-                      <img src={m.avatar} alt={m.name} className='h-12 w-12 rounded-xl object-cover' />
+                      <img src={m.avatar} alt='' className='h-12 w-12 rounded-xl object-cover' />
                     ) : (
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-sm font-bold text-white ${avatarColor(m.id)}`}>
+                      <div aria-hidden='true' className={`flex h-12 w-12 items-center justify-center rounded-xl text-sm font-bold text-white ${avatarColor(m.id)}`}>
                         {getInitials(m.name)}
                       </div>
                     )}
-                    <span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${m.isActive ? 'bg-green-400' : 'bg-slate-300'}`} />
-                  </div>
+                    <span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-zinc-900 ${m.isActive ? 'bg-green-400' : 'bg-zinc-600'}`} />
+                  </button>
                   <div className='min-w-0'>
                     <div className='flex items-center gap-1.5'>
-                      <p className='truncate font-semibold text-slate-900'>{m.name}</p>
+                      <p className='truncate font-semibold text-white'>{m.name}</p>
                       {m.systemRole === 'admin' && <Crown size={13} className='flex-shrink-0 text-yellow-500' />}
                     </div>
-                    <p className='truncate text-xs text-slate-400'>{m.email}</p>
+                    <p className='truncate text-xs text-zinc-400'>{m.email}</p>
                   </div>
                 </div>
 
@@ -286,37 +291,37 @@ export default function MembersPage() {
                 <div className='mt-3 flex items-center gap-2'>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                     m.systemRole === 'admin'
-                      ? 'bg-red-100 text-red-600'
-                      : 'bg-blue-100 text-blue-600'
+                      ? 'bg-red-500/10 text-red-400'
+                      : 'bg-cyan-500/10 text-cyan-400'
                   }`}>
                     {m.systemRole === 'admin' ? 'Admin' : 'Member'}
                   </span>
-                  <span className={`text-xs font-medium ${m.isActive ? 'text-green-500' : 'text-slate-400'}`}>
+                  <span className={`text-xs font-medium ${m.isActive ? 'text-green-400' : 'text-zinc-500'}`}>
                     {m.isActive ? '● Active' : '● Inactive'}
                   </span>
                   {m.position && (
-                    <span className='ml-auto truncate text-xs text-slate-400'>{m.position}</span>
+                    <span className='ml-auto truncate text-xs text-zinc-500'>{m.position}</span>
                   )}
                 </div>
 
                 {/* Stats */}
-                <div className='mt-4 grid grid-cols-2 divide-x divide-slate-100 rounded-xl bg-slate-50 py-2'>
+                <div className='mt-4 grid grid-cols-2 divide-x divide-zinc-700 rounded-xl bg-zinc-800 py-2'>
                   <div className='flex flex-col items-center gap-0.5 px-2'>
-                    <p className='text-sm font-bold text-blue-500'>{m.points.toLocaleString()}</p>
-                    <p className='text-[10px] text-slate-400'>Points</p>
+                    <p className='text-sm font-bold text-cyan-400'>{m.points.toLocaleString()}</p>
+                    <p className='text-[10px] text-zinc-500'>Points</p>
                   </div>
                   <div className='flex flex-col items-center gap-0.5 px-2'>
-                    <p className='text-xs text-slate-500'>
+                    <p className='text-xs text-zinc-400'>
                       {new Date(m.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
                     </p>
-                    <p className='text-[10px] text-slate-400'>Joined</p>
+                    <p className='text-[10px] text-zinc-500'>Joined</p>
                   </div>
                 </div>
 
                 {/* View Profile CTA */}
                 <button
                   onClick={() => navigate(`/profile/${m.id}`)}
-                  className='mt-3 w-full rounded-xl border border-slate-200 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50'
+                  className='mt-3 w-full rounded-xl border border-zinc-700 py-2 text-xs font-semibold text-zinc-400 hover:bg-zinc-800'
                 >
                   View Profile
                 </button>
