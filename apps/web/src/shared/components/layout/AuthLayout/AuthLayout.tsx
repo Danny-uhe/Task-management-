@@ -1,57 +1,36 @@
-import AuthBranding from "@/features/auth/components/AuthBranding";
-import type { AuthLayoutProps } from "./AuthLayout.types";
+import type { AuthLayoutProps } from './AuthLayout.types';
+import VantaGlobe from '@/features/auth/components/VantaGlobe';
 
-export default function AuthLayout({
-  children,
-  branding,
-}: AuthLayoutProps) {
+export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-      <div className="flex min-h-screen">
+    // bg-[#100f18] matches vanta backgroundColor exactly — no flash of wrong colour
+    <main className='relative flex min-h-screen items-center justify-center bg-[#100f18] px-5 py-12'>
 
-        <div className="hidden lg:block lg:w-[38%]">
-          <AuthBranding {...branding} />
-        </div>
+      {/* Animated 3-D globe background */}
+      <VantaGlobe />
 
-        <div className="flex flex-1 items-center justify-center px-8">
-          <div className="w-full max-w-[430px]">
-            {children}
-          </div>
-        </div>
+      {/* Frosted-glass login card — sits above the canvas */}
+      <div className='relative z-10 w-full max-w-[420px]'>
+        <header className='mb-8 text-center'>
+          <img
+            src='/favicon.svg'
+            alt=''
+            aria-hidden='true'
+            className='mx-auto mb-4 h-12 w-12 drop-shadow-[0_0_12px_rgba(96,63,255,0.8)]'
+          />
+          <p className='text-3xl font-bold tracking-tight text-white'>
+            Task<span className='text-violet-400'>Sync</span>
+          </p>
+          <p className='mt-2 text-sm text-zinc-400'>
+            A clearer way to work together.
+          </p>
+        </header>
 
+        {/* Card with subtle glass effect */}
+        <section className='rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl shadow-black/60 backdrop-blur-md sm:p-8'>
+          {children}
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
-
-
-
-
-
-
-
-
-
-// import AuthBranding from "@/features/auth/components/AuthBranding";
-// import type { AuthLayoutProps } from "./AuthLayout.types";
-
-// export default function AuthLayout({
-//   children,
-//   branding,
-// }: AuthLayoutProps) {
-//   return (
-//     <div className="min-h-screen bg-[var(--color-background)]">
-//       <div className="mx-auto flex min-h-screen max-w-7xl">
-
-//         <div className="hidden lg:block lg:w-2/5">
-//           <AuthBranding {...branding} />
-//         </div>
-
-//         <div className="flex w-full items-center justify-center p-8 lg:w-3/5">
-//           {children}
-//         </div>
-
-//       </div>
-//     </div>
-//   );
-// }
